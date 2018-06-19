@@ -36,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         TextView tv = findViewById(R.id.editText);
-        tv.setText("Network Sniffer, to start select options from the menu on the top right." +
-                "Network Sniffer requires ROOT privileges!");
+        tv.setText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam eget turpis vehicula nibh ultricies ornare." +
+                " Aenean hendrerit ullamcorper pretium. Quisque ut augue consectetur, ornare leo ut, iaculis tellus.");
         tv.setKeyListener(null);
         // Example of a call to a native method
         // TextView tv = (TextView) findViewById(R.id.sample_text);
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         Toast toast;
         toast = Toast.makeText(getApplicationContext(), "Granting root to NetSniffer!",Toast.LENGTH_SHORT);
         toast.show();
-
+/*
         Process suProcess;
         try{
             suProcess = Runtime.getRuntime().exec("su");
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("ROOT:","Root access failed ["+e.getClass().getName()+"] : "+e.getMessage());
             Toast.makeText(getApplicationContext(),"IOException : exec(su) failed",Toast.LENGTH_SHORT).show();
         }
-
+*/
         File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
         if(!res.exists()){
             Log.d("TCPDump Resource: ","TCPDump binary does not exist");
@@ -143,9 +143,11 @@ public class MainActivity extends AppCompatActivity {
                 p.waitFor();
                 p.destroy();
 
+                Log.d("TCPDump Resource: ","TCPDump binary saved on device");
             } catch (IOException io){
-
+                Log.d("TCPDump res (IOEX): ",io.getMessage());
             } catch (InterruptedException ie){
+                Log.d("TCPDump res (INTEX): ",ie.getMessage());
 
             }
         }

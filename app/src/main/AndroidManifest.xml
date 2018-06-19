@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.yuxuan.netsniffer">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -18,13 +18,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SniffActivity"
-            android:parentActivityName=".MainActivity"/>
-        <activity android:name=".SettingActivity"
-            android:parentActivityName=".MainActivity"/>
-        <activity android:name=".HelpActivity"
-            android:parentActivityName=".MainActivity"/>
-        <service android:name=".SniffService"/>
+        <activity
+            android:name=".SniffActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".SettingActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".HelpActivity"
+            android:parentActivityName=".MainActivity" />
+
+        <service android:name=".SniffService" />
+
+        <activity android:name=".TestActivity"></activity>
     </application>
 
 </manifest>
