@@ -30,23 +30,41 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native-lib");
     }
 
+    boolean check;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         TextView tv = findViewById(R.id.editText);
-        tv.setText("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam eget turpis vehicula nibh ultricies ornare." +
-                " Aenean hendrerit ullamcorper pretium. Quisque ut augue consectetur, ornare leo ut, iaculis tellus.");
+        check = checkResources();
+        if(!check)
+            tv.setText("NetSniffer requires certain resources to function, press the button below to copy the required binaries to device internal storage");
+        else
+            tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
+
         tv.setKeyListener(null);
+
         // Example of a call to a native method
         // TextView tv = (TextView) findViewById(R.id.sample_text);
         // tv.setText(stringFromJNI());
     }
 
+    public boolean checkResources(){
+
+        boolean flag = false;
+
+        File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
+        if(res.exists())
+           flag = true;
+
+        return flag;
+    }
+
     public void getRoot(View view){
         Toast toast;
-        toast = Toast.makeText(getApplicationContext(), "Granting root to NetSniffer!",Toast.LENGTH_SHORT);
+        toast = Toast.makeText(getApplicationContext(), "Fetching NetSniffer resources",Toast.LENGTH_SHORT);
         toast.show();
 /*
         Process suProcess;
@@ -126,10 +144,10 @@ public class MainActivity extends AppCompatActivity {
 */
         File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
         if(!res.exists()){
-            Log.d("TCPDump Resource: ","TCPDump binary does not exist");
+
             // copy tcpdump to memory
             try {
-                InputStream fis = this.getAssets().open("tcpdump");                // !!!!!
+                InputStream fis = this.getAssets().open("tcpdump");
                 byte[] fbuffer = new byte[fis.available()];
                 fis.read(fbuffer);
                 fis.close();
@@ -143,7 +161,12 @@ public class MainActivity extends AppCompatActivity {
                 p.waitFor();
                 p.destroy();
 
+                check = true;
+                TextView tv = findViewById(R.id.editText);
+                tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
+
                 Log.d("TCPDump Resource: ","TCPDump binary saved on device");
+                Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
             } catch (IOException io){
                 Log.d("TCPDump res (IOEX): ",io.getMessage());
             } catch (InterruptedException ie){
@@ -168,23 +191,26 @@ public class MainActivity extends AppCompatActivity {
         switch(item.getItemId()){
 
             case R.id.sniff_service:
-                toast = Toast.makeText(getApplicationContext(),"Sniff!",Toast.LENGTH_SHORT);
-                toast.show();
-                intent = new Intent(this,SniffActivity.class);
-                startActivity(intent);
+                if(check) {
+                    toast = Toast.makeText(getApplicationContext(), "Sniff", Toast.LENGTH_SHORT);
+                    toast.show();
+                    intent = new Intent(this, SniffActivity.class);
+                    startActivity(intent);
+                } else
+                    Toast.makeText(getApplicationContext(),"NetSniffer cannot proceed",Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.setting:
-                toast = Toast.makeText(getApplicationContext(), "Setting!", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(getApplicationContext(), "Setting", Toast.LENGTH_SHORT);
                 toast.show();
                 intent = new Intent(this, SettingActivity.class);
                 startActivity(intent);
                 return true;
 
             case R.id.help:
-                toast = Toast.makeText(getApplicationContext(), "Help!", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(getApplicationContext(), "Help", Toast.LENGTH_SHORT);
                 toast.show();
-                intent = new Intent(this, SettingActivity.class);
+                intent = new Intent(this, HelpActivity.class);
                 startActivity(intent);
                 return true;
 
