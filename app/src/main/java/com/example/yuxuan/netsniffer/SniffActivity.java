@@ -311,6 +311,8 @@ public class SniffActivity extends AppCompatActivity{
 
                     //String temp = buffer.toString();
                     updateDisplay(tempData);
+                    tempData = "";
+                    try { reader.close(); } catch(IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
                     //Log.d("Display Thread : ",temp);
 
                 }
@@ -345,12 +347,12 @@ public class SniffActivity extends AppCompatActivity{
             //readThread.interrupt();
 
             // close the reader for tcpdump output file
-            try { reader.close(); } catch (IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
+            //try { reader.close(); } catch (IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
 
             // stop the tcpdump process
             tcpdumpTimer.cancel();
             process.destroy();
-            buffer.setLength(0);
+            //buffer.setLength(0);
             tempData = "";
 
             // destroy the tcpdump process doesn't cause the process to be stopped on the system
