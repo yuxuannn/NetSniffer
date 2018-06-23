@@ -95,12 +95,11 @@ public class SniffActivity extends AppCompatActivity{
                 toast = Toast.makeText(getApplicationContext(), "Start PCAP", Toast.LENGTH_SHORT);
                 toast.show();
 
-                TextView tv = (TextView)findViewById(R.id.sniffDisplay);
-                tv.setText("Sniffing and saving as pcap file ...");
-
                 // start live pcap
-                if(!pcap.isStarted())
+                if(!pcap.isStarted()) {
+                    getDisplay().setText("Sniffing and saving as pcap file ...");
                     pcap.startPCAP();
+                }
 
                 return true;
 
@@ -108,13 +107,11 @@ public class SniffActivity extends AppCompatActivity{
                 toast = Toast.makeText(getApplicationContext(),"Stop PCAP", Toast.LENGTH_SHORT);
                 toast.show();
 
-                TextView tv2 = (TextView)findViewById(R.id.sniffDisplay);
-                tv2.setText("Results saved in 'Download' as "+pcap.getFileName());
-
                 // stop live pcap
-                if(pcap.isStarted())
+                if(pcap.isStarted()) {
+                    getDisplay().setText("Results saved in 'Download' as "+pcap.getFileName());
                     pcap.stopPCAP();
-
+                }
                 return true;
 
             case R.id.clear_live:
@@ -122,14 +119,12 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // clear current list on screen
-                TextView tv3 = (TextView)findViewById(R.id.sniffDisplay);
-                tv3.setText("To start, choose an option from the menu on the top right");
+                getDisplay().setText("To start, choose an option from the menu on the top right");
 
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
-
         }
 
     }
@@ -145,7 +140,10 @@ public class SniffActivity extends AppCompatActivity{
         });
     }
 
-
+    public TextView getDisplay(){
+        TextView tv = (TextView)findViewById(R.id.sniffDisplay);
+        return tv;
+    }
 
     public class TCPDump{
 
@@ -173,17 +171,10 @@ public class SniffActivity extends AppCompatActivity{
         // timer task to create a pricess and exec tcpdump
         private TimerTask tcpdump;
 
-        /*** reader thread ***/
-        // thread that reads output file created by tcpdump
-/*        private Thread readThread;
-
-        // output file of tcpdump
-        private File dumpedFile;
-*/
+        /*** display thread ***/
         // buffered reader to read file
         private BufferedReader reader;
 
-        /*** display thread ***/
         // timer to manage the display of packets
         private Timer displayTimer;
 
@@ -193,15 +184,6 @@ public class SniffActivity extends AppCompatActivity{
         // temporary string to replace buffer
         private String tempData;
 
-        /*** pcap capture ***/
-        // pcap command
-        private final String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output.pcap\n";
-
-        // pcap timer
-        private Timer pcapTimer;
-
-        // pcap timertask
-        private TimerTask pcapTimerTask;
 
         public TCPDump(){
             super();
@@ -231,7 +213,7 @@ public class SniffActivity extends AppCompatActivity{
                         Thread.sleep(1000);
 
                         // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("ps tcpdump");
+                        Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
                         // read output of ps
                         DataInputStream is = new DataInputStream(process2.getInputStream());
 
@@ -313,13 +295,6 @@ public class SniffActivity extends AppCompatActivity{
         public void stop(){
             // stop display thread
             displayTimer.cancel();
-
-            // stop the reader thread
-            // interrupting the thread will cause while loop to break
-            //readThread.interrupt();
-
-            // close the reader for tcpdump output file
-            //try { reader.close(); } catch (IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
 
             // stop the tcpdump process
             tcpdumpTimer.cancel();
@@ -413,7 +388,7 @@ public class SniffActivity extends AppCompatActivity{
                         Thread.sleep(1000);
 
                         // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("ps tcpdump");
+                        Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
                         // read output of ps
                         DataInputStream is = new DataInputStream(process2.getInputStream());
 
@@ -485,7 +460,7 @@ public class SniffActivity extends AppCompatActivity{
         }
 
         public String getFileName(){
-            return "output-"+counter+".pcap";
+            return "output-"+(counter-1)+".pcap";
         }
 
     }
