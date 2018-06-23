@@ -37,6 +37,7 @@ import java.util.TimerTask;
 public class SniffActivity extends AppCompatActivity{
 
     private TCPDump tcpdump;
+    private PCAP pcap;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -55,6 +56,7 @@ public class SniffActivity extends AppCompatActivity{
 
         verifyStoragePermissions(this);
         tcpdump = new TCPDump();
+        pcap = new PCAP();
     }
 
     @Override
@@ -89,16 +91,30 @@ public class SniffActivity extends AppCompatActivity{
 
                 return true;
 
-            case R.id.save_pcap:
-                toast = Toast.makeText(getApplicationContext(), "Save to PCAP", Toast.LENGTH_SHORT);
+            case R.id.start_pcap:
+                toast = Toast.makeText(getApplicationContext(), "Start PCAP", Toast.LENGTH_SHORT);
                 toast.show();
-                // prompt for PCAP filename to save to, save current list to default set dir
+
+                TextView tv = (TextView)findViewById(R.id.sniffDisplay);
+                tv.setText("Sniffing and saving as pcap file ...");
+
+                // start live pcap
+                if(!pcap.isStarted())
+                    pcap.startPCAP();
+
                 return true;
 
-            case R.id.load_pcap:
-                toast = Toast.makeText(getApplicationContext(),"Load from PCAP", Toast.LENGTH_SHORT);
+            case R.id.stop_pcap:
+                toast = Toast.makeText(getApplicationContext(),"Stop PCAP", Toast.LENGTH_SHORT);
                 toast.show();
-                // open file viewer, user chooses PCAP file to load, then details displayed on screen
+
+                TextView tv2 = (TextView)findViewById(R.id.sniffDisplay);
+                tv2.setText("Results saved in 'Download' as "+pcap.getFileName());
+
+                // stop live pcap
+                if(pcap.isStarted())
+                    pcap.stopPCAP();
+
                 return true;
 
             case R.id.clear_live:
@@ -106,8 +122,8 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // clear current list on screen
-                TextView tv = (TextView)findViewById(R.id.sniffDisplay);
-                tv.setText("To start, choose an option from the menu on the top right");
+                TextView tv3 = (TextView)findViewById(R.id.sniffDisplay);
+                tv3.setText("To start, choose an option from the menu on the top right");
 
                 return true;
 
@@ -118,17 +134,7 @@ public class SniffActivity extends AppCompatActivity{
 
     }
 
-/*
-    public void updateDisplay(String data){
-        this.data = data;
-        dataHandler.post(dataRunnable);
-    }
 
-    final Runnable dataRunnable = new Runnable(){
-        public void run(){
-            display.setText(data);
-        }
-    };*/
     public void updateDisplay(String content){
         final String data = content;
         runOnUiThread(new Runnable(){
@@ -137,11 +143,6 @@ public class SniffActivity extends AppCompatActivity{
                 TextView tv = (TextView)findViewById(R.id.sniffDisplay); tv.setText(data);
             }
         });
-    }
-
-    public TextView getDisplay(){
-        TextView tv = (TextView)findViewById(R.id.sniffDisplay);
-        return tv;
     }
 
 
@@ -161,7 +162,7 @@ public class SniffActivity extends AppCompatActivity{
         private int pid;
 
         // buffer to store captured packets
-        private StringBuffer buffer;
+        //private StringBuffer buffer;
 
         // buffer size
         private int size = 150000;
@@ -174,11 +175,11 @@ public class SniffActivity extends AppCompatActivity{
 
         /*** reader thread ***/
         // thread that reads output file created by tcpdump
-        private Thread readThread;
+/*        private Thread readThread;
 
         // output file of tcpdump
         private File dumpedFile;
-
+*/
         // buffered reader to read file
         private BufferedReader reader;
 
@@ -192,11 +193,20 @@ public class SniffActivity extends AppCompatActivity{
         // temporary string to replace buffer
         private String tempData;
 
+        /*** pcap capture ***/
+        // pcap command
+        private final String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output.pcap\n";
+
+        // pcap timer
+        private Timer pcapTimer;
+
+        // pcap timertask
+        private TimerTask pcapTimerTask;
+
         public TCPDump(){
             super();
             //buffer = new StringBuffer(size);
             this.isStarted = false;
-            //checkResource();
             tempData = "";
             init();
         }
@@ -248,42 +258,7 @@ public class SniffActivity extends AppCompatActivity{
                     }
                 }
             };
-/*
-            // init the reader thread
-            readThread = new Thread() {
-                public void run() {
-                    try {
-                        // ensure the file to be read exists
-                        boolean fileOK = false;
 
-                        while (!fileOK) {
-                            dumpedFile = new File("/sdcard/Download/output.txt");
-                            if (dumpedFile.exists()) {
-                                fileOK = true;
-                                Toast.makeText(getApplicationContext(),"Output detected", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                        // open a reader on tcpdump output file
-                        reader = new BufferedReader(new FileReader(dumpedFile));
-                        String temp;
-                        // the while loop is broken if the thread is interrupted
-                        while (!Thread.interrupted()) {
-                            temp = reader.readLine();
-                            if (temp != null) {
-                                Log.d("READ PKT:", temp);
-                                //buffer.append(temp);
-                                //if(buffer.capacity() == size)
-                                //    buffer.setLength(0);
-                                tempData += temp;
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-*/
             // init timer task that displays data to UI
             displayThread = new TimerTask() {
                 public void run() {
@@ -328,12 +303,9 @@ public class SniffActivity extends AppCompatActivity{
             tcpdumpTimer = new Timer();
             tcpdumpTimer.schedule(tcpdump,0);
 
-            // start the reader thread
-            //readThread.start();
-
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,4000,2000);
+            displayTimer.schedule(displayThread,3000,1000); // might require tweaking
 
         }
 
@@ -387,44 +359,135 @@ public class SniffActivity extends AppCompatActivity{
             isStarted = false;
         }
 
-        public StringBuffer getOutput(){
-            return buffer;
+
+        public boolean isStarted(){
+            return isStarted;
+        }
+
+    }
+
+    public class PCAP{
+
+        // pcap status
+        private boolean isStarted;
+
+        // pcap pid
+        private int pid;
+
+        // running instance
+        private int counter;
+
+        // pcap process
+        private Process pcapProcess;
+
+        // pcap command
+        private String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n";
+
+        // pcap timer
+        private Timer pcapTimer;
+
+        // pcap timertask
+        private TimerTask pcapTimerTask;
+
+        public PCAP(){
+            super();
+            this.counter = 0;
+            this.isStarted = false;
+            init();
+        }
+
+        public void init(){
+            pcapTimerTask = new TimerTask() {
+                public void run() {
+                    try {
+                        // create a process with root privilege
+                        pcapProcess = Runtime.getRuntime().exec("su");
+                        DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
+                        os.writeBytes(pcapCommand);
+                        os.flush();
+                        os.writeBytes("exit\n");
+                        os.flush();
+                        os.close();
+
+                        // sleep 1 second to ensure that the new process is listed by the system
+                        Thread.sleep(1000);
+
+                        // get pid of process that exec tcpdump with ps command
+                        Process process2 = Runtime.getRuntime().exec("ps tcpdump");
+                        // read output of ps
+                        DataInputStream is = new DataInputStream(process2.getInputStream());
+
+                        ByteArrayOutputStream res = new ByteArrayOutputStream();
+                        byte[] tempBuffer = new byte[1024];
+                        int length;
+                        while ((length = is.read(tempBuffer)) != -1) {
+                            res.write(tempBuffer, 0, length);
+                        }
+
+                        String temp = res.toString("UTF-8");
+
+                        temp = temp.replaceAll("^root *([0-9]*).*","$1");
+                        pid = Integer.parseInt(temp);
+                        Log.d("PID (PCAP): ", "" + pid);
+                        updateDisplay("PID : "+temp);
+
+                        //Toast.makeText(getApplicationContext(),"PID:"+pid,Toast.LENGTH_SHORT);
+
+                        process2.destroy();
+                    } catch (Exception e) {
+                        //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
+                }
+            };
+        }
+
+        public void startPCAP(){
+            isStarted = true;
+            counter += 1;
+            // launch pcap process
+            pcapTimer = new Timer();
+            pcapTimer.schedule(pcapTimerTask,0);
+
+            //updateDisplay("Sniffing ... ");
+        }
+
+        public void stopPCAP(){
+
+            pcapTimer.cancel();
+            pcapProcess.destroy();
+
+            // stop pcap process
+            try{
+                // a new process is spawned to kill pcap, terminates immediately after
+                String killCommand = "kill "+pid;
+                Process process2 = Runtime.getRuntime().exec("su");
+                DataOutputStream os = new DataOutputStream(process2.getOutputStream());
+                os.writeBytes(killCommand);
+                os.flush();
+                os.writeBytes("exit\n");
+                os.flush();
+                os.close();
+
+                //updateDisplay("Stopped, saved to output.pcap");
+
+            } catch(IOException io){
+                Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+
+            // to restart the process, re init threads and timers
+            init();
+            isStarted = false;
         }
 
         public boolean isStarted(){
             return isStarted;
         }
 
-
-/*
-        public void checkResource(){
-            File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-            if(!res.exists()){
-                Log.d("TCPDump Resource: ","TCPDump binary does not exist copying to memory");
-                // copy tcpdump to memory
-                try {
-                    InputStream fis = sniffActivity.getAssets().open("tcpdump");                // !!!!!
-                    byte[] fbuffer = new byte[fis.available()];
-                    fis.read(fbuffer);
-                    fis.close();
-
-                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-                    OutputStream fos = new FileOutputStream(targetFile);
-                    fos.write(fbuffer);
-                    fos.close();
-
-                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 744 /data/data/com.example.yuxuan.netsniffer/tcpdump");
-                    p.waitFor();
-                    p.destroy();
-
-                } catch (IOException io){
-
-                } catch (InterruptedException ie){
-
-                }
-            }
+        public String getFileName(){
+            return "output-"+counter+".pcap";
         }
-*/
+
     }
 
     public static void verifyStoragePermissions(Activity activity) {
