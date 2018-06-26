@@ -96,10 +96,9 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // start live pcap
-                if(!pcap.isStarted()) {
-                    getDisplay().setText("Sniffing and saving as pcap file ...");
+                if(!pcap.isStarted())
                     pcap.startPCAP();
-                }
+
 
                 return true;
 
@@ -108,10 +107,9 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // stop live pcap
-                if(pcap.isStarted()) {
-                    getDisplay().setText("Results saved in 'Download' as "+pcap.getFileName());
+                if(pcap.isStarted())
                     pcap.stopPCAP();
-                }
+
                 return true;
 
             case R.id.clear_live:
@@ -163,12 +161,12 @@ public class SniffActivity extends AppCompatActivity{
         //private StringBuffer buffer;
 
         // buffer size
-        private int size = 150000;
+        //private int size = 150000;
 
-        // timer task to create a process and exec tcpdump on it
+        // timer to create a process and exec tcpdump on it
         private Timer tcpdumpTimer;
 
-        // timer task to create a pricess and exec tcpdump
+        // timer task to create a process and exec tcpdump
         private TimerTask tcpdump;
 
         /*** display thread ***/
@@ -183,7 +181,6 @@ public class SniffActivity extends AppCompatActivity{
 
         // temporary string to replace buffer
         private String tempData;
-
 
         public TCPDump(){
             super();
@@ -231,8 +228,6 @@ public class SniffActivity extends AppCompatActivity{
                         Log.d("PID (TCP): ", "" + pid);
                         updateDisplay("PID : "+temp);
 
-                        Toast.makeText(getApplicationContext(),"PID:"+pid,Toast.LENGTH_SHORT);
-
                         process2.destroy();
                     } catch (Exception e) {
                         // handle exception
@@ -257,7 +252,7 @@ public class SniffActivity extends AppCompatActivity{
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
                             tempData += temp;
-                            tempData += "\n";
+                            tempData += "\n---\n";
                             //updateDisplay(temp);
                         }
 
@@ -356,7 +351,7 @@ public class SniffActivity extends AppCompatActivity{
         private Process pcapProcess;
 
         // pcap command
-        private String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n";
+        //private String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n";
 
         // pcap timer
         private Timer pcapTimer;
@@ -378,7 +373,7 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         pcapProcess = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                        os.writeBytes(pcapCommand);
+                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n");
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
@@ -419,16 +414,16 @@ public class SniffActivity extends AppCompatActivity{
 
         public void startPCAP(){
             isStarted = true;
-            counter += 1;
             // launch pcap process
             pcapTimer = new Timer();
             pcapTimer.schedule(pcapTimerTask,0);
 
-            //updateDisplay("Sniffing ... ");
+            updateDisplay("Sniffing to PCAP ... ");
         }
 
         public void stopPCAP(){
 
+            counter += 1;
             pcapTimer.cancel();
             pcapProcess.destroy();
 
@@ -444,8 +439,6 @@ public class SniffActivity extends AppCompatActivity{
                 os.flush();
                 os.close();
 
-                //updateDisplay("Stopped, saved to output.pcap");
-
             } catch(IOException io){
                 Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
             }
@@ -453,6 +446,7 @@ public class SniffActivity extends AppCompatActivity{
             // to restart the process, re init threads and timers
             init();
             isStarted = false;
+            updateDisplay("PCAP saved as "+getFileName());
         }
 
         public boolean isStarted(){
