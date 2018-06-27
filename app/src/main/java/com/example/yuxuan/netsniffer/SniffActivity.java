@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -99,7 +100,6 @@ public class SniffActivity extends AppCompatActivity{
                 if(!pcap.isStarted())
                     pcap.startPCAP();
 
-
                 return true;
 
             case R.id.stop_pcap:
@@ -156,12 +156,6 @@ public class SniffActivity extends AppCompatActivity{
 
         // pid of tcpdump process
         private int pid;
-
-        // buffer to store captured packets
-        //private StringBuffer buffer;
-
-        // buffer size
-        //private int size = 150000;
 
         // timer to create a process and exec tcpdump on it
         private Timer tcpdumpTimer;
@@ -223,10 +217,18 @@ public class SniffActivity extends AppCompatActivity{
 
                         String temp = res.toString("UTF-8");
 
-                        temp = temp.replaceAll("^root *([0-9]*).*","$1");
-                        pid = Integer.parseInt(temp);
-                        Log.d("PID (TCP): ", "" + pid);
-                        updateDisplay("PID : "+temp);
+                        //temp = temp.replaceAll("^root *([0-9]*).*","$1");
+                        //pid = Integer.parseInt(temp);
+                        //Log.d("PID (TCP): ", "" + pid);
+                        //updateDisplay("PID : "+temp);
+
+                        String split[] = temp.split(" "); // might be '\t'
+                        for(int i=0; i<split.length; i++){
+                            if(split[i].contains("root")){
+                                pid = Integer.parseInt(split[i+1]);
+                                break;
+                            }
+                        }
 
                         process2.destroy();
                     } catch (Exception e) {
@@ -242,9 +244,9 @@ public class SniffActivity extends AppCompatActivity{
 
                     try {
                         File dumpedFile = new File("/sdcard/Download/output.txt");
-                        if(!dumpedFile.exists())
+                        /*if(!dumpedFile.exists())
                             Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
-
+                        */
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
 
@@ -258,13 +260,13 @@ public class SniffActivity extends AppCompatActivity{
 
                     } catch(IOException io){
                         Log.d("IOEX",io.getMessage());
-                        Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
                     }
 
                     //String temp = buffer.toString();
                     updateDisplay(tempData);
                     tempData = "";
-                    try { reader.close(); } catch(IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
+                    try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
                     //Log.d("Display Thread : ",temp);
 
                 }
@@ -310,7 +312,7 @@ public class SniffActivity extends AppCompatActivity{
                 os.flush();
                 os.close();
             } catch(IOException io){
-                Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
             }
 
             // delete the temporary output file
@@ -396,10 +398,18 @@ public class SniffActivity extends AppCompatActivity{
 
                         String temp = res.toString("UTF-8");
 
-                        temp = temp.replaceAll("^root *([0-9]*).*","$1");
-                        pid = Integer.parseInt(temp);
-                        Log.d("PID (PCAP): ", "" + pid);
-                        updateDisplay("PID : "+temp);
+                        //temp = temp.replaceAll("^root *([0-9]*).*","$1");
+                        //pid = Integer.parseInt(temp);
+                        //Log.d("PID (PCAP): ", "" + pid);
+                        //updateDisplay("PID : "+temp);
+
+                        String split[] = temp.split(" "); // might be '\t'
+                        for(int i=0; i<split.length; i++){
+                            if(split[i].contains("root")){
+                                pid = Integer.parseInt(split[i+1]);
+                                break;
+                            }
+                        }
 
                         //Toast.makeText(getApplicationContext(),"PID:"+pid,Toast.LENGTH_SHORT);
 
@@ -440,7 +450,7 @@ public class SniffActivity extends AppCompatActivity{
                 os.close();
 
             } catch(IOException io){
-                Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
             }
 
             // to restart the process, re init threads and timers
