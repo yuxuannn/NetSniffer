@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -206,10 +207,27 @@ public class SniffActivity extends AppCompatActivity{
                         // get pid of process that exec tcpdump with ps command
                         Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
                         // read output of ps
-                        DataInputStream is = new DataInputStream(process2.getInputStream());
 
+                        /*** THIS PART DOES NOT WORK ***/
+                        DataInputStream is = new DataInputStream(process2.getInputStream());
+                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while((line = br.readLine()) != null)
+                            sb.append(line + "\n");
+
+                        updateDisplay(sb.toString());
+
+                        String[] tempArray = sb.toString().split(" ");
+                        for(int i=0; i<tempArray.length; i++){
+                            if(tempArray[i].equals("root"))
+                                pid = Integer.parseInt(tempArray[i+1]);
+                        }
+                        //updateDisplay("Pid : "+pid);
+
+                        /*
                         ByteArrayOutputStream res = new ByteArrayOutputStream();
-                        byte[] tempBuffer = new byte[1024];
+                        byte[] tempBuffer = new byte[3072];
                         int length;
                         while ((length = is.read(tempBuffer)) != -1) {
                             res.write(tempBuffer, 0, length);
@@ -220,15 +238,17 @@ public class SniffActivity extends AppCompatActivity{
                         //temp = temp.replaceAll("^root *([0-9]*).*","$1");
                         //pid = Integer.parseInt(temp);
                         //Log.d("PID (TCP): ", "" + pid);
-                        //updateDisplay("PID : "+temp);
+                        updateDisplay(temp);
 
-                        String split[] = temp.split(" "); // might be '\t'
+                        String split[] = temp.split(" "); // might be '\t' or ' '
                         for(int i=0; i<split.length; i++){
                             if(split[i].contains("root")){
-                                pid = Integer.parseInt(split[i+1]);
+                                pid = Integer.parseInt(split[i+6]);
                                 break;
                             }
                         }
+                        */
+                        /*** ***/
 
                         process2.destroy();
                     } catch (Exception e) {
@@ -266,7 +286,8 @@ public class SniffActivity extends AppCompatActivity{
                     //String temp = buffer.toString();
                     updateDisplay(tempData);
                     tempData = "";
-                    try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
+                    if(reader != null)
+                        try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
                     //Log.d("Display Thread : ",temp);
 
                 }
@@ -352,9 +373,6 @@ public class SniffActivity extends AppCompatActivity{
         // pcap process
         private Process pcapProcess;
 
-        // pcap command
-        //private String pcapCommand = "/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n";
-
         // pcap timer
         private Timer pcapTimer;
 
@@ -382,11 +400,12 @@ public class SniffActivity extends AppCompatActivity{
                         os.close();
 
                         // sleep 1 second to ensure that the new process is listed by the system
-                        Thread.sleep(1000);
+                        Thread.sleep(2000);
 
                         // get pid of process that exec tcpdump with ps command
                         Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
                         // read output of ps
+                        /*** THIS PART DOES NOT WORK ***/
                         DataInputStream is = new DataInputStream(process2.getInputStream());
 
                         ByteArrayOutputStream res = new ByteArrayOutputStream();
@@ -403,16 +422,16 @@ public class SniffActivity extends AppCompatActivity{
                         //Log.d("PID (PCAP): ", "" + pid);
                         //updateDisplay("PID : "+temp);
 
-                        String split[] = temp.split(" "); // might be '\t'
+                        String split[] = temp.split(" "); // might be '\t' or ' '
                         for(int i=0; i<split.length; i++){
                             if(split[i].contains("root")){
-                                pid = Integer.parseInt(split[i+1]);
+                                pid = Integer.parseInt(split[i+6]);
                                 break;
                             }
                         }
 
                         //Toast.makeText(getApplicationContext(),"PID:"+pid,Toast.LENGTH_SHORT);
-
+                        /*** ***/
                         process2.destroy();
                     } catch (Exception e) {
                         //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
@@ -432,7 +451,6 @@ public class SniffActivity extends AppCompatActivity{
         }
 
         public void stopPCAP(){
-
             counter += 1;
             pcapTimer.cancel();
             pcapProcess.destroy();

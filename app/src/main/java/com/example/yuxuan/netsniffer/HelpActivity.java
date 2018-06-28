@@ -73,10 +73,15 @@ public class HelpActivity extends AppCompatActivity {
    public void addData(String data){
        final String content = data;
        runOnUiThread(new Runnable(){
-           @Override
-           public void run(){
-                dataBuffer.add(content);
-                adapter.notifyDataSetChanged();
+          @Override
+          public void run(){
+                String[] tempDataArray = content.toString().split("\\n");
+                dataBuffer.clear();
+                for(int i=0; i<tempDataArray.length; i++){
+                    dataBuffer.add(tempDataArray[i]);
+                }
+                adapter = new ArrayAdapter<String>(HelpActivity.this,android.R.layout.simple_list_item_1,dataBuffer);
+                listView.setAdapter(adapter);
            }
        });
    }
@@ -167,7 +172,7 @@ public class HelpActivity extends AppCompatActivity {
                         DataInputStream is = new DataInputStream(process2.getInputStream());
 
                         ByteArrayOutputStream res = new ByteArrayOutputStream();
-                        byte[] tempBuffer = new byte[1024];
+                        byte[] tempBuffer = new byte[3072];
                         int length;
                         while ((length = is.read(tempBuffer)) != -1) {
                             res.write(tempBuffer, 0, length);
@@ -193,8 +198,8 @@ public class HelpActivity extends AppCompatActivity {
 
                     try {
                         File dumpedFile = new File("/sdcard/Download/output.txt");
-                        if(!dumpedFile.exists())
-                            Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
+                        //if(!dumpedFile.exists())
+                        //    Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
 
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
@@ -203,21 +208,22 @@ public class HelpActivity extends AppCompatActivity {
 
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
-                            addData(temp);
-                            //tempData += temp;
-                            //tempData += "\n---\n";
+                            //addData(temp);
+                            tempData += temp;
+                            tempData += "\n";
                             //updateDisplay(temp);
                         }
 
                     } catch(IOException io){
                         Log.d("IOEX",io.getMessage());
-                        Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
                     }
 
                     //String temp = buffer.toString();
-                    //addData(tempData);
+                    addData(tempData);
                     //tempData = "";
-                    try { reader.close(); } catch(IOException io) { Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
+                    if(reader != null)
+                        try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
                     //Log.d("Display Thread : ",temp);
 
                 }
@@ -235,7 +241,7 @@ public class HelpActivity extends AppCompatActivity {
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,3000,1000); // might require tweaking
+            displayTimer.schedule(displayThread,5000,1000); // might require tweaking
 
         }
 
@@ -263,7 +269,7 @@ public class HelpActivity extends AppCompatActivity {
                 os.flush();
                 os.close();
             } catch(IOException io){
-                Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
             }
 
             // delete the temporary output file
