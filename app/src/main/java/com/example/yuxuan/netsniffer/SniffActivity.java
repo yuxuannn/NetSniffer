@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -205,7 +206,13 @@ public class SniffActivity extends AppCompatActivity{
                         Thread.sleep(1000);
 
                         // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
+                        Process process2 = Runtime.getRuntime().exec("su");
+                        DataOutputStream dos = new DataOutputStream(process2.getOutputStream());
+                        dos.writeBytes("ps | grep /data/data/com.example.yuxuan.netsniffer/tcpdump > /sdcard/Download/ps.txt\n");
+                        dos.flush();
+                        dos.writeBytes("exit\n");
+                        dos.flush();
+                        dos.close();
                         // read output of ps
 
                         /*** THIS PART DOES NOT WORK ***/
