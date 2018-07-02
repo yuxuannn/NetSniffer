@@ -202,7 +202,7 @@ public class SniffActivity extends AppCompatActivity{
                         os.flush();
                         os.close();
 
-                        // sleep 1 second to ensure that the new process is listed by the system
+                        // sleep to ensure that the new process is listed by the system
                         Thread.sleep(1000);
 
                         // get pid of process that exec tcpdump with ps command
@@ -213,7 +213,6 @@ public class SniffActivity extends AppCompatActivity{
                         dos.writeBytes("exit\n");
                         dos.flush();
                         dos.close();
-                        // read output of ps
 
                         /*** THIS PART DOES NOT WORK ***/
                         DataInputStream is = new DataInputStream(process2.getInputStream());
@@ -331,23 +330,50 @@ public class SniffActivity extends AppCompatActivity{
             // to achieve that the process must be killed
             try{
                 // a new process is spawned to kill tcpdump, terminates immediately after
-                String killCommand = "kill "+pid;
+                File psFile = new File("sdcard/Download/ps.txt");
+                BufferedReader br = new BufferedReader(new FileReader(psFile));
+                String line, check = "root      ";
+                while((line = br.readLine()) != null) {
+
+                    if(line.contains(check)) {
+                        Process process2 = Runtime.getRuntime().exec("su");
+                        DataOutputStream os = new DataOutputStream(process2.getOutputStream());
+
+                        for (int i = -1; (i = line.indexOf(check, i + 1)) != -1; i++) {
+                            int index = i+10;
+                            int endIndex = line.indexOf(" ",index);
+                            pid = Integer.parseInt(new String(line.substring(index,endIndex)));
+                            os.writeBytes("kill "+pid+"\n");
+                            os.flush();
+                        }
+
+                        os.writeBytes("exit\n");
+                        os.flush();
+                        os.close();
+                    }
+                }
+            } catch(IOException io){
+                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+
+            // delete temporary ps file
+            try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
-                os.writeBytes(killCommand);
+                os.writeBytes("rm /sdcard/Download/ps.txt\n");
                 os.flush();
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){
-                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
-            }
+            } catch(IOException io){ }
 
             // delete the temporary output file
             try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
                 os.writeBytes("rm /sdcard/Download/output.txt\n");
+                os.flush();
+                os.writeBytes("exit\n");
                 os.flush();
                 os.close();
             } catch(IOException io){
