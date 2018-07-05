@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">NetSniffer</string>
 
-    <string name="root_button">Get Resources</string>
+    <string name="res_button">Get Resources</string>
     <string name="sniff_service">Sniff</string>
+    <string name="map_service">Map</string>
     <string name="setting">Settings</string>
     <string name="help">Help</string>
 

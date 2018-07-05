@@ -229,31 +229,7 @@ public class SniffActivity extends AppCompatActivity{
                             if(tempArray[i].equals("root"))
                                 pid = Integer.parseInt(tempArray[i+1]);
                         }
-                        //updateDisplay("Pid : "+pid);
 
-                        /*
-                        ByteArrayOutputStream res = new ByteArrayOutputStream();
-                        byte[] tempBuffer = new byte[3072];
-                        int length;
-                        while ((length = is.read(tempBuffer)) != -1) {
-                            res.write(tempBuffer, 0, length);
-                        }
-
-                        String temp = res.toString("UTF-8");
-
-                        //temp = temp.replaceAll("^root *([0-9]*).*","$1");
-                        //pid = Integer.parseInt(temp);
-                        //Log.d("PID (TCP): ", "" + pid);
-                        updateDisplay(temp);
-
-                        String split[] = temp.split(" "); // might be '\t' or ' '
-                        for(int i=0; i<split.length; i++){
-                            if(split[i].contains("root")){
-                                pid = Integer.parseInt(split[i+6]);
-                                break;
-                            }
-                        }
-                        */
                         /*** ***/
 
                         process2.destroy();
@@ -329,7 +305,7 @@ public class SniffActivity extends AppCompatActivity{
             // destroy the tcpdump process doesn't cause the process to be stopped on the system
             // to achieve that the process must be killed
             try{
-                // a new process is spawned to kill tcpdump, terminates immediately after
+                // a new process is spawned to kill ALL tcpdump processes, terminates immediately after
                 File psFile = new File("sdcard/Download/ps.txt");
                 BufferedReader br = new BufferedReader(new FileReader(psFile));
                 String line, check = "root      ";

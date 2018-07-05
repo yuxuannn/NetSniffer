@@ -3,6 +3,7 @@ package com.example.yuxuan.netsniffer;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -56,94 +57,21 @@ public class MainActivity extends AppCompatActivity {
         boolean flag = false;
 
         File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-        if(res.exists())
+        File res1 = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
+        if(res.exists() && res1.exists())
            flag = true;
+
 
         return flag;
     }
 
-    public void getRoot(View view){
+    public void getRes(View view){
         Toast toast;
         toast = Toast.makeText(getApplicationContext(), "Fetching NetSniffer resources",Toast.LENGTH_SHORT);
         toast.show();
-/*
-        Process suProcess;
-        try{
-            suProcess = Runtime.getRuntime().exec("su");
 
-            DataOutputStream os = new DataOutputStream(suProcess.getOutputStream());
-            DataInputStream is = new DataInputStream(suProcess.getInputStream());
-            suProcess.waitFor();
-
-            if(os != null && is != null){
-                os.writeBytes("id\n");
-                os.flush();
-
-                ByteArrayOutputStream res = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
-                int length;
-                while((length = is.read(buffer)) != -1){
-                    res.write(buffer,0,length);
-                }
-                String currUid = res.toString("UTF-8");
-                //String currUid = is.readLine();
-                boolean suGranted = false;
-                if(currUid == null){
-                    Log.d("ROOT:","Unable to get root access");
-                    Toast.makeText(getApplicationContext(),"Unable to get root access",Toast.LENGTH_LONG).show();
-                }
-
-                else if(currUid.contains("uid=0")){
-                    suGranted = true;
-                    Log.d("ROOT:","Root access granted");
-                    Toast.makeText(getApplicationContext(),"Root access granted",Toast.LENGTH_LONG).show();
-
-                    // copy tcpdump to memory
-                    InputStream fis = this.getAssets().open("tcpdump");
-                    byte[] fbuffer = new byte[fis.available()];
-                    fis.read(fbuffer);
-                    fis.close();
-
-                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-                    OutputStream fos = new FileOutputStream(targetFile);
-                    fos.write(fbuffer);
-                    fos.close();
-
-                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 744 /data/data/com.example.yuxuan.netsniffer/tcpdump");
-                    p.waitFor();
-                    p.destroy();
-                    Toast.makeText(getApplicationContext(),"TCPDump extracted",Toast.LENGTH_LONG).show();
-                }
-
-                else{
-                    Log.d("ROOT:","Root access rejected");
-                    Toast.makeText(getApplicationContext(), "Root access rejected",Toast.LENGTH_LONG).show();
-                }
-
-                os.writeBytes("exit\n");
-                os.flush();
-
-                is.close();
-                os.close();
-                suProcess.destroy();
-
-                if(!suGranted){
-                    is.close();
-                    os.close();
-                    suProcess.destroy();
-                    System.exit(0);
-                }
-            }
-
-
-
-        } catch (Exception e){
-            Log.d("ROOT:","Root access failed ["+e.getClass().getName()+"] : "+e.getMessage());
-            Toast.makeText(getApplicationContext(),"IOException : exec(su) failed",Toast.LENGTH_SHORT).show();
-        }
-*/
-        File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-        if(!res.exists()){
+        File resTCPDump = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
+        if(!resTCPDump.exists()){
 
             // copy tcpdump to memory
             try {
@@ -161,12 +89,8 @@ public class MainActivity extends AppCompatActivity {
                 p.waitFor();
                 p.destroy();
 
-                check = true;
-                TextView tv = findViewById(R.id.editText);
-                tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
-
                 Log.d("TCPDump Resource: ","TCPDump binary saved on device");
-                Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
+
             } catch (IOException io){
                 Log.d("TCPDump res (IOEX): ",io.getMessage());
             } catch (InterruptedException ie){
@@ -174,6 +98,40 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
+
+        File resNmap = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
+        if(!resNmap.exists()){
+
+            // copy tcpdump to memory
+            try {
+                InputStream fis = this.getAssets().open("nmap");
+                byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap");
+                p.waitFor();
+                p.destroy();
+
+
+                Log.d("NMAP Resource: ","Nmap binary saved on device");
+
+            } catch (IOException io){
+                Log.d("Nmap res (IOEX): ",io.getMessage());
+            } catch (InterruptedException ie){
+                Log.d("Nmap res (INTEX): ",ie.getMessage());
+
+            }
+        }
+        check = true;
+        Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
+        TextView tv = findViewById(R.id.editText);
+        tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
     }
 
     @Override
@@ -198,6 +156,13 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else
                     Toast.makeText(getApplicationContext(),"NetSniffer cannot proceed",Toast.LENGTH_SHORT).show();
+                return true;
+
+            case R.id.map_service:
+                toast = Toast.makeText(getApplicationContext(), "Map", Toast.LENGTH_SHORT);
+                toast.show();
+                intent = new Intent(this, MapActivity.class);
+                startActivity(intent);
                 return true;
 
             case R.id.setting:
