@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
         if(res.exists() && res1.exists())
            flag = true;
 
-
         return flag;
     }
 
@@ -102,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         File resNmap = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
         if(!resNmap.exists()){
 
-            // copy tcpdump to memory
+            // copy nmap to memory
             try {
                 InputStream fis = this.getAssets().open("nmap");
                 byte[] fbuffer = new byte[fis.available()];
@@ -125,7 +124,35 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Nmap res (IOEX): ",io.getMessage());
             } catch (InterruptedException ie){
                 Log.d("Nmap res (INTEX): ",ie.getMessage());
+            }
+        }
 
+        File resNmapSvc = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
+        if(!resNmapSvc.exists()) {
+
+            // copy nmap-services to memory
+            try {
+                InputStream fis = this.getAssets().open("nmap-services");
+                byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-services");
+                p.waitFor();
+                p.destroy();
+
+
+                Log.d("NMAP Resource: ", "Nmap-services saved on device");
+
+            } catch (IOException io) {
+                Log.d("Nmap res (IOEX): ", io.getMessage());
+            } catch (InterruptedException ie) {
+                Log.d("Nmap res (INTEX): ", ie.getMessage());
             }
         }
         check = true;
@@ -159,14 +186,17 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.map_service:
-                toast = Toast.makeText(getApplicationContext(), "Map", Toast.LENGTH_SHORT);
-                toast.show();
-                intent = new Intent(this, MapActivity.class);
-                startActivity(intent);
+                if(check) {
+                    toast = Toast.makeText(getApplicationContext(), "Map", Toast.LENGTH_SHORT);
+                    toast.show();
+                    intent = new Intent(this, MapActivity.class);
+                    startActivity(intent);
+                } else
+                    Toast.makeText(getApplicationContext(),"NetSniffer cannot proceed",Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.setting:
-                toast = Toast.makeText(getApplicationContext(), "Setting", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(getApplicationContext(), "Settings", Toast.LENGTH_SHORT);
                 toast.show();
                 intent = new Intent(this, SettingActivity.class);
                 startActivity(intent);

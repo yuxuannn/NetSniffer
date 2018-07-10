@@ -8,10 +8,9 @@
     <string name="help">Help</string>
 
     <string name="start_live">Start Live Capture</string>
-    <string name="stop_live">Stop Live Capture</string>
-    <string name="clear_live">Clear List</string>
     <string name="save_pcap">Start PCAP Capture</string>
-    <string name="load_pcap">Stop PCAP Capture</string>
+    <string name="stop_sniff">Stop Sniff</string>
+    <string name="clear_live">Clear List</string>
 
     <string name="start_map">Start Map Network</string>
     <string name="stop_map">Stop Map Network</string>

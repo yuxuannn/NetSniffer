@@ -2,12 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/start_live"
         android:title="@string/start_live"/>
-    <item android:id="@+id/stop_live"
-        android:title="@string/stop_live"/>
     <item android:id="@+id/start_pcap"
         android:title="@string/save_pcap"/>
-    <item android:id="@+id/stop_pcap"
-        android:title="@string/load_pcap"/>
+    <item android:id="@+id/stop_sniff"
+        android:title="@string/stop_sniff"/>
     <item android:id="@+id/clear_live"
         android:title="@string/clear_live"/>
 </menu>
