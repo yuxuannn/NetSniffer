@@ -2,6 +2,7 @@ package com.example.yuxuan.netsniffer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,20 +32,21 @@ public class MapActivity extends AppCompatActivity {
     };
 
     private Nmap nmap;
+    ItemAdapter itemAdapter;
+    ListView listView;
+    String[] dataArray;
+    Context context;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
-        TextView display;
-        display = findViewById(R.id.mapDisplay);
-        display.setKeyListener(null);
-        display.setText("To start, type in an address and choose an option from the menu on the top right");
-
         verifyStoragePermissions(this);
-        // initialize new nmap object
-        nmap = new Nmap();
+        context = this;
+        nmap = new Nmap(context);
+        listView = (ListView)findViewById(R.id.mapList);
+        updateDisplay("To start, enter an address, then choose a option from the menu on the top right",this);
     }
 
     @Override
@@ -62,12 +65,12 @@ public class MapActivity extends AppCompatActivity {
                 toast = Toast.makeText(getApplicationContext(),"Start Map",Toast.LENGTH_SHORT);
                 toast.show();
 
-                TextView address = (TextView) findViewById(R.id.addressBox);
-                String message = address.getText().toString();
-
                 // call nmap to start (pass in command chosen via options)
                 if(!nmap.isStarted)
-                    nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+message+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n"); // Nmap command
+                    nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n");
+                else
+                    Toast.makeText(getApplicationContext(),"Map already started",Toast.LENGTH_SHORT).show();
+
 
                 return true;
 
@@ -78,6 +81,8 @@ public class MapActivity extends AppCompatActivity {
                 // call nmap to stop
                 if(nmap.isStarted)
                     nmap.stop();
+                else
+                    Toast.makeText(getApplicationContext(),"Map not started",Toast.LENGTH_SHORT).show();
 
                 return true;
 
@@ -85,7 +90,8 @@ public class MapActivity extends AppCompatActivity {
                 toast = Toast.makeText(getApplicationContext(), "Clear List", Toast.LENGTH_SHORT);
                 toast.show();
 
-                getDisplay().setText("To start, type in an address and choose an option from the menu on the top right");
+                //clear list view
+                updateDisplay("To start, enter an address, then choose a option from the menu on the top right",this);
 
                 return true;
 
@@ -94,47 +100,67 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
-    public void updateDisplay(String content){
-        final String data = content;
+    public String getAddress(){
+        TextView tv = findViewById(R.id.addressBox);
+        return tv.getText().toString();
+    }
+
+    public void updateDisplay(String data, final Context context){
+        final String content = data;
         runOnUiThread(new Runnable(){
             @Override
             public void run(){
-                TextView tv = (TextView)findViewById(R.id.mapDisplay); tv.setText(data);
+
+                listView = (ListView)findViewById(R.id.mapList);
+                dataArray = content.split("\\n");
+
+                itemAdapter = new ItemAdapter(context,dataArray);
+                listView.setAdapter(itemAdapter);
             }
         });
     }
 
-    public TextView getDisplay(){
-        TextView tv = (TextView)findViewById(R.id.mapDisplay);
-        return tv;
-    }
 
     public class Nmap{
 
+        // is started variable
         private boolean isStarted;
 
+        // nmap timer
         private Timer nmapTimer;
 
+        // nmap timer task
         private TimerTask nmapTimerTask;
 
+        // display timer
         private Timer displayTimer;
 
+        // display timer task
         private TimerTask displayTimerTask;
 
+        // empty command - receive from switch case
         private String command;
 
+        // nmap process
         private Process nmapProcess;
 
+        // buffered reader
         private BufferedReader reader;
 
+        // nmap process pid
         private int pid;
 
+        // output string
         private String tempData;
 
-        public Nmap(){
+        // temporary context
+        private Context context;
+
+        public Nmap(Context context){
             isStarted = false;
             tempData = "";
             command = "";
+            this.context = context;
         }
 
         private void init(){
@@ -166,33 +192,55 @@ public class MapActivity extends AppCompatActivity {
                 }
             };
 
+            // init timer task that displays data to UI
             displayTimerTask = new TimerTask() {
                 public void run() {
 
+                    boolean stop = false;
                     try {
                         File dumpedFile = new File("/sdcard/Download/nmap.txt");
+                        //if(!dumpedFile.exists())
+                        //    Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
 
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
 
+                        //clearListView();
+
                         while ((temp = reader.readLine())!= null) {
-                            Log.d("READ DATA:", temp);
-                            tempData += temp;
-                            tempData += "\n";
+                            Log.d("READ MAP:", temp);
+
+                            if (temp.contains("Starting")) {
+                                tempData += temp;
+                            } else if (temp.contains("scan report")){
+                                tempData += "\n"+temp;
+                            } else if (temp.contains("Note")){
+                                tempData += "\n"+temp;
+                            } else if (temp.contains("done")){
+                                tempData += "\n"+temp;
+                                stop = true;
+                            } else
+                                tempData += "   "+temp;
+
                         }
 
                     } catch(IOException io){
                         Log.d("IOEX",io.getMessage());
+                        //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
                     }
 
-                    updateDisplay(tempData);
+                    //String temp = buffer.toString();
+                    updateDisplay(tempData,context);
                     tempData = "";
                     if(reader != null)
-                        try { reader.close(); } catch(IOException io) { }
-
+                        try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
+                    //Log.d("Display Thread : ",temp);
+                    if(stop)
+                        stop();
                 }
             };
         }
+
 
         public void start(String arg){
             command = arg;
@@ -216,7 +264,7 @@ public class MapActivity extends AppCompatActivity {
             tempData = "";
 
             try{
-                // a new process is spawned to kill ALL tcpdump processes, terminates immediately after
+                // a new process is spawned to kill ALL nmap processes, terminates immediately after
                 File psFile = new File("sdcard/Download/ps.txt");
                 BufferedReader br = new BufferedReader(new FileReader(psFile));
                 String line, check = "root      ";

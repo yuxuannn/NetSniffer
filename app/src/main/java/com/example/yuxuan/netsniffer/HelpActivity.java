@@ -2,6 +2,7 @@ package com.example.yuxuan.netsniffer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
@@ -25,15 +26,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class HelpActivity extends AppCompatActivity {
 
 
-    ArrayAdapter<String> adapter;
-    ArrayList<String> dataBuffer;
+    /*** ListView ***/
+    ItemAdapter itemAdapter;
+    String[] dataArray;
     ListView listView;
+    Context context;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -41,56 +45,47 @@ public class HelpActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private TCPDump tcpDump;
+    private MapTest nmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_help);
         verifyStoragePermissions(this);
-        tcpDump = new TCPDump();
-        init();
+        context = this;
+        nmap = new MapTest(context);
+        listView = (ListView)findViewById(R.id.list);
    }
 
-   public void init(){
-        //adapter.clear();
-        dataBuffer = new ArrayList<String>();
-        adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,dataBuffer);
-        listView = (ListView)findViewById(R.id.list);
-        listView.setAdapter(adapter);
-        addData("Packet Information");
+
+   public String getAddress(){
+        TextView tv = findViewById(R.id.editText2);
+        return tv.getText().toString();
    }
 
    public void start(View view){
-        tcpDump.start();
+        if(!nmap.isStarted)
+            nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n");
+        else
+            Toast.makeText(getApplicationContext(),"Nmap already started",Toast.LENGTH_SHORT).show();
    }
 
-   public void stop(View view){
-        tcpDump.stop();
-        //clearListView();
-   }
 
-   public void addData(String data){
+   public void addData(String data, final Context context){
        final String content = data;
        runOnUiThread(new Runnable(){
           @Override
           public void run(){
-                String[] tempDataArray = content.toString().split("\\n");
-                dataBuffer.clear();
-                for(int i=0; i<tempDataArray.length; i++){
-                    dataBuffer.add(tempDataArray[i]);
-                }
-                adapter = new ArrayAdapter<String>(HelpActivity.this,android.R.layout.simple_list_item_1,dataBuffer);
-                listView.setAdapter(adapter);
+
+                listView = (ListView)findViewById(R.id.list);
+                dataArray = content.split("\\n");
+
+                itemAdapter = new ItemAdapter(context,dataArray);
+                listView.setAdapter(itemAdapter);
            }
        });
    }
 
-   public void clearListView(){
-        adapter.clear();
-        dataBuffer.clear();
-        adapter.notifyDataSetChanged();
-   }
 
     public static void verifyStoragePermissions(Activity activity) {
         // Check if we have write permission
@@ -106,13 +101,12 @@ public class HelpActivity extends AppCompatActivity {
         }
     }
 
-    public class TCPDump{
+    public class MapTest{
 
         private boolean isStarted;
 
-        /***tcpdump***/
-        // command to launch tcpdump
-        private final String command = "/data/data/com.example.yuxuan.netsniffer/tcpdump -l -i wlan0 > /sdcard/Download/output.txt\n";
+        // command to launch nmap
+        private String command;
 
         //  process where tcpdump will be executed
         private Process process;
@@ -121,10 +115,10 @@ public class HelpActivity extends AppCompatActivity {
         private int pid;
 
         // timer to create a process and exec tcpdump on it
-        private Timer tcpdumpTimer;
+        private Timer nmapTimer;
 
         // timer task to create a process and exec tcpdump
-        private TimerTask tcpdump;
+        private TimerTask nmapTimerTask;
 
         /*** display thread ***/
         // buffered reader to read file
@@ -139,11 +133,14 @@ public class HelpActivity extends AppCompatActivity {
         // temporary string to replace buffer
         private String tempData;
 
-        public TCPDump(){
+        // temporary context
+        private Context context;
+
+        public MapTest(Context context){
             super();
-            //buffer = new StringBuffer(size);
             this.isStarted = false;
             tempData = "";
+            this.context = context;
             init();
         }
 
@@ -151,7 +148,7 @@ public class HelpActivity extends AppCompatActivity {
         private void init() {
 
             // init tcpdump timer task and launch tcpdump on it
-            tcpdump = new TimerTask() {
+            nmapTimerTask = new TimerTask() {
                 public void run() {
                     try {
                         // create a process with root privilege
@@ -167,22 +164,13 @@ public class HelpActivity extends AppCompatActivity {
                         Thread.sleep(1000);
 
                         // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("ps /data/data/com.example.yuxuan.netsniffer/tcpdump");
-                        // read output of ps
-                        DataInputStream is = new DataInputStream(process2.getInputStream());
-
-                        ByteArrayOutputStream res = new ByteArrayOutputStream();
-                        byte[] tempBuffer = new byte[3072];
-                        int length;
-                        while ((length = is.read(tempBuffer)) != -1) {
-                            res.write(tempBuffer, 0, length);
-                        }
-
-                        String temp = res.toString("UTF-8");
-
-                        temp = temp.replaceAll("^root *([0-9]*).*","$1");
-                        pid = Integer.parseInt(temp);
-                        Log.d("PID (TCP): ", "" + pid);
+                        Process process2 = Runtime.getRuntime().exec("su");
+                        DataOutputStream dos = new DataOutputStream(process2.getOutputStream());
+                        dos.writeBytes("ps | grep /data/data/com.example.yuxuan.netsniffer/nmap > /sdcard/Download/ps.txt\n");
+                        dos.flush();
+                        dos.writeBytes("exit\n");
+                        dos.flush();
+                        dos.close();
 
                         process2.destroy();
                     } catch (Exception e) {
@@ -196,22 +184,32 @@ public class HelpActivity extends AppCompatActivity {
             displayThread = new TimerTask() {
                 public void run() {
 
+                    boolean stop = false;
                     try {
-                        File dumpedFile = new File("/sdcard/Download/output.txt");
+                        File dumpedFile = new File("/sdcard/Download/nmap.txt");
                         //if(!dumpedFile.exists())
                         //    Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
 
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
 
-                        clearListView();
+                        //clearListView();
 
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
-                            //addData(temp);
-                            tempData += temp;
-                            tempData += "\n";
-                            //updateDisplay(temp);
+
+                            if (temp.contains("Starting")) {
+                                tempData += temp;
+                                tempData += "\n";
+                            } else if (temp.contains("MAC")) {
+                                tempData += "\t"+temp;
+                                tempData += "\n";
+                            } else if (temp.contains("done")){
+                                tempData += temp;
+                                stop = true;
+                            } else
+                                tempData += " "+temp;
+
                         }
 
                     } catch(IOException io){
@@ -220,28 +218,32 @@ public class HelpActivity extends AppCompatActivity {
                     }
 
                     //String temp = buffer.toString();
-                    addData(tempData);
-                    //tempData = "";
+                    addData(tempData,context);
+                    tempData = "";
                     if(reader != null)
                         try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
                     //Log.d("Display Thread : ",temp);
-
+                    if(stop)
+                        stop();
                 }
             };
         }
 
 
         // start scanning process
-        public void start(){
+        public void start(String arg){
             isStarted = true;
 
+            command = arg;
+            init();
+
             // launch tcpdump process
-            tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,0);
+            nmapTimer = new Timer();
+            nmapTimer.schedule(nmapTimerTask,0);
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,5000,1000); // might require tweaking
+            displayTimer.schedule(displayThread,3000,1000); // might require tweaking
 
         }
 
@@ -251,32 +253,57 @@ public class HelpActivity extends AppCompatActivity {
             displayTimer.cancel();
 
             // stop the tcpdump process
-            tcpdumpTimer.cancel();
+            nmapTimer.cancel();
             process.destroy();
             //buffer.setLength(0);
             tempData = "";
 
-            // destroy the tcpdump process doesn't cause the process to be stopped on the system
-            // to achieve that the process must be killed
             try{
-                // a new process is spawned to kill tcpdump, terminates immediately after
-                String killCommand = "kill "+pid;
+                // a new process is spawned to kill ALL nmap processes, terminates immediately after
+                File psFile = new File("sdcard/Download/ps.txt");
+                BufferedReader br = new BufferedReader(new FileReader(psFile));
+                String line, check = "root      ";
+                while((line = br.readLine()) != null) {
+
+                    if(line.contains(check)) {
+                        Process process2 = Runtime.getRuntime().exec("su");
+                        DataOutputStream os = new DataOutputStream(process2.getOutputStream());
+
+                        for (int i = -1; (i = line.indexOf(check, i + 1)) != -1; i++) {
+                            int index = i+10;
+                            int endIndex = line.indexOf(" ",index);
+                            pid = Integer.parseInt(new String(line.substring(index,endIndex)));
+                            os.writeBytes("kill "+pid+"\n");
+                            os.flush();
+                        }
+
+                        os.writeBytes("exit\n");
+                        os.flush();
+                        os.close();
+                    }
+                }
+            } catch(IOException io){
+                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+
+            // delete temporary ps file
+            try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
-                os.writeBytes(killCommand);
+                os.writeBytes("rm /sdcard/Download/ps.txt\n");
                 os.flush();
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){
-                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
-            }
+            } catch(IOException io){ }
 
             // delete the temporary output file
             try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
-                os.writeBytes("rm /sdcard/Download/output.txt\n");
+                os.writeBytes("rm /sdcard/Download/nmap.txt\n");
+                os.flush();
+                os.writeBytes("exit\n");
                 os.flush();
                 os.close();
             } catch(IOException io){
@@ -286,6 +313,7 @@ public class HelpActivity extends AppCompatActivity {
             // to restart the process, re init threads and timers
             init();
             isStarted = false;
+            command = "";
         }
 
 
