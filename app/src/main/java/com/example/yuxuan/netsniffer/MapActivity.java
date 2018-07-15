@@ -67,10 +67,22 @@ public class MapActivity extends AppCompatActivity {
 
                 // call nmap to start (pass in command chosen via options)
                 if(!nmap.isStarted)
-                    nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n");
+                    nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n",1);
                 else
                     Toast.makeText(getApplicationContext(),"Map already started",Toast.LENGTH_SHORT).show();
 
+
+                return true;
+
+            case R.id.start_OS:
+                toast = Toast.makeText(getApplicationContext(), "Start OS Map",Toast.LENGTH_SHORT);
+                toast.show();
+
+                // call nmap to start
+                if(!nmap.isStarted)
+                    nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -O "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n",2);
+                else
+                    Toast.makeText(getApplicationContext(),"Map already started",Toast.LENGTH_SHORT).show();
 
                 return true;
 
@@ -156,6 +168,9 @@ public class MapActivity extends AppCompatActivity {
         // temporary context
         private Context context;
 
+        // mode
+        private int mode;
+
         public Nmap(Context context){
             isStarted = false;
             tempData = "";
@@ -210,6 +225,7 @@ public class MapActivity extends AppCompatActivity {
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ MAP:", temp);
 
+                            // if(mode == 1)
                             if (temp.contains("Starting")) {
                                 tempData += temp;
                             } else if (temp.contains("scan report")){
@@ -221,6 +237,7 @@ public class MapActivity extends AppCompatActivity {
                                 stop = true;
                             } else
                                 tempData += "   "+temp;
+                            // else(mode == 2)
 
                         }
 
@@ -242,8 +259,9 @@ public class MapActivity extends AppCompatActivity {
         }
 
 
-        public void start(String arg){
+        public void start(String arg, int mode){
             command = arg;
+            this.mode = mode;
             init();
             isStarted = true;
 

@@ -13,6 +13,7 @@
     <string name="clear_live">Clear List</string>
 
     <string name="start_map">Start Map Network</string>
+    <string name="start_OS">Start OS Map Network</string>
     <string name="stop_map">Stop Map Network</string>
     <string name="clear_map">Clear List</string>
 </resources>

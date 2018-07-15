@@ -155,6 +155,36 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Nmap res (INTEX): ", ie.getMessage());
             }
         }
+
+        File resNmapOs = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+        if(!resNmapOs.exists()) {
+
+            // copy nmap-services to memory
+            try {
+                InputStream fis = this.getAssets().open("nmap-os-db");
+                byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+                p.waitFor();
+                p.destroy();
+
+
+                Log.d("NMAP Resource: ", "Nmap-OS-DB saved on device");
+
+            } catch (IOException io) {
+                Log.d("Nmap res (IOEX): ", io.getMessage());
+            } catch (InterruptedException ie) {
+                Log.d("Nmap res (INTEX): ", ie.getMessage());
+            }
+        }
+
         check = true;
         Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
         TextView tv = findViewById(R.id.editText);
