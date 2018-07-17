@@ -14,7 +14,6 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -225,19 +224,35 @@ public class MapActivity extends AppCompatActivity {
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ MAP:", temp);
 
-                            // if(mode == 1)
-                            if (temp.contains("Starting")) {
-                                tempData += temp;
-                            } else if (temp.contains("scan report")){
-                                tempData += "\n"+temp;
-                            } else if (temp.contains("Note")){
-                                tempData += "\n"+temp;
-                            } else if (temp.contains("done")){
-                                tempData += "\n"+temp;
-                                stop = true;
-                            } else
-                                tempData += "   "+temp;
-                            // else(mode == 2)
+                            if(mode == 1) {
+                                if (temp.contains("Starting")) {
+                                    tempData += temp;
+                                } else if (temp.contains("scan report")) {
+                                    tempData += "\n" + temp;
+                                } else if (temp.contains("Note")) {
+                                    tempData += "\n" + temp;
+                                } else if (temp.contains("done")) {
+                                    tempData += "\n" + temp;
+                                    stop = true;
+                                } else
+                                    tempData += "   " + temp;
+                            }
+                            else if (mode == 2) {
+                                if (temp.contains("Starting")){
+                                    tempData += temp;
+                                } else if (temp.contains("scan report")) {
+                                    tempData += "\n" + temp;
+                                } else if (temp.contains("Device type")){
+                                    tempData += " - "+temp;
+                                } else if (temp.contains("Running")){
+                                    tempData += " , "+temp;
+                                } else if (temp.contains("OS details")){
+                                    tempData += "   " + temp;
+                                }  else if (temp.contains("done")) {
+                                    tempData += "\n" + temp;
+                                    stop = true;
+                                }
+                            }
 
                         }
 

@@ -16,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,26 +40,30 @@ import java.util.TimerTask;
 
 public class SniffActivity extends AppCompatActivity{
 
-    private TCPDump tcpdump;
-
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    private TCPDump tcpdump;
+    private ListView listView;
+    private ItemAdapter itemAdapter;
+    private String[] dataArray;
+    private Context context;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sniff);
 
-        TextView display;
-        display = (TextView) findViewById(R.id.sniffDisplay);
-        display.setKeyListener(null);
-        display.setText("To start, choose an option from the menu on the top right");
 
         verifyStoragePermissions(this);
-        tcpdump = new TCPDump();
+        context = this;
+        tcpdump = new TCPDump(context);
+        listView = (ListView)findViewById(R.id.sniffList);
+        updateDisplay("To start, choose an option from the menu on the top right",context);
     }
 
     @Override
@@ -108,7 +113,7 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // clear current list on screen
-                getDisplay().setText("To start, choose an option from the menu on the top right");
+                updateDisplay("To start, choose an option from the menu on the top right",context);
 
                 return true;
 
@@ -119,19 +124,29 @@ public class SniffActivity extends AppCompatActivity{
     }
 
 
-    public void updateDisplay(String content){
-        final String data = content;
+    public void updateDisplay(String data, final Context context){
+        final String content = data;
         runOnUiThread(new Runnable(){
             @Override
             public void run(){
-                TextView tv = (TextView)findViewById(R.id.sniffDisplay); tv.setText(data);
+
+                listView = (ListView)findViewById(R.id.sniffList);
+                dataArray = content.split("\\n");
+
+                itemAdapter = new ItemAdapter(context,dataArray);
+                listView.setAdapter(itemAdapter);
             }
         });
     }
 
-    public TextView getDisplay(){
-        TextView tv = (TextView)findViewById(R.id.sniffDisplay);
-        return tv;
+    public void showToast(String content){
+        final String data = content;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),data,Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public class TCPDump{
@@ -181,9 +196,13 @@ public class SniffActivity extends AppCompatActivity{
         // pcap timertask
         private TimerTask pcapTimerTask;
 
-        public TCPDump(){
+        // temporary context
+        private Context context;
+
+        public TCPDump(Context context){
             super();
 
+            this.context = context;
             this.isStarted = false;
             this.isStartedPCAP = false;
             counter = 0;
@@ -219,24 +238,6 @@ public class SniffActivity extends AppCompatActivity{
                         dos.flush();
                         dos.close();
 
-                        /*** THIS PART DOES NOT WORK ***/
-                        DataInputStream is = new DataInputStream(process2.getInputStream());
-                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while((line = br.readLine()) != null)
-                            sb.append(line + "\n");
-
-                        updateDisplay(sb.toString());
-
-                        String[] tempArray = sb.toString().split(" ");
-                        for(int i=0; i<tempArray.length; i++){
-                            if(tempArray[i].equals("root"))
-                                pid = Integer.parseInt(tempArray[i+1]);
-                        }
-
-                        /*** ***/
-
                         process2.destroy();
                     } catch (Exception e) {
                         // handle exception
@@ -261,7 +262,7 @@ public class SniffActivity extends AppCompatActivity{
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
                             tempData += temp;
-                            tempData += "\n---\n";
+                            tempData += "\n";
                             //updateDisplay(temp);
                         }
 
@@ -269,7 +270,7 @@ public class SniffActivity extends AppCompatActivity{
                         Log.d("IOEX",io.getMessage());
                     }
 
-                    updateDisplay(tempData);
+                    updateDisplay(tempData,context);
                     tempData = "";
                     if(reader != null)
                         try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
@@ -302,24 +303,6 @@ public class SniffActivity extends AppCompatActivity{
                         dos.flush();
                         dos.close();
 
-                        /*** THIS PART DOES NOT WORK ***/
-                        DataInputStream is = new DataInputStream(process2.getInputStream());
-                        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while((line = br.readLine()) != null)
-                            sb.append(line + "\n");
-
-                        updateDisplay(sb.toString());
-
-                        String[] tempArray = sb.toString().split(" ");
-                        for(int i=0; i<tempArray.length; i++){
-                            if(tempArray[i].equals("root"))
-                                pid = Integer.parseInt(tempArray[i+1]);
-                        }
-
-                        /*** ***/
-
                         process2.destroy();
                     } catch (Exception e) {
                         //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
@@ -351,7 +334,7 @@ public class SniffActivity extends AppCompatActivity{
             pcapTimer = new Timer();
             pcapTimer.schedule(pcapTimerTask,0);
 
-            updateDisplay("Sniffing to PCAP ... ");
+            showToast("Sniffing to PCAP ... ");
         }
 
 
@@ -372,7 +355,7 @@ public class SniffActivity extends AppCompatActivity{
                 counter += 1;
                 pcapTimer.cancel();
                 pcapProcess.destroy();
-                updateDisplay("PCAP saved as "+getFileName());
+                showToast("PCAP saved as "+getFileName());
             }
 
             // destroy the tcpdump process doesn't cause the process to be stopped on the system
