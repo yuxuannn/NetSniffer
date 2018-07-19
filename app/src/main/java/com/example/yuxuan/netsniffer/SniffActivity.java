@@ -186,7 +186,6 @@ public class SniffActivity extends AppCompatActivity{
                 // clear all filters
                 filterAddress = null;
                 filterPort = null;
-                Toast.makeText(getApplicationContext(), "Filters Cleared", Toast.LENGTH_SHORT).show();
 
                 return true;
 
