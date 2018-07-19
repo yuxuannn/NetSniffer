@@ -2,8 +2,10 @@ package com.example.yuxuan.netsniffer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
@@ -11,11 +13,13 @@ import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +56,8 @@ public class SniffActivity extends AppCompatActivity{
     private String[] dataArray;
     private Context context;
 
+    private String filterAddress;
+    private String filterPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +69,8 @@ public class SniffActivity extends AppCompatActivity{
         context = this;
         tcpdump = new TCPDump(context);
         listView = (ListView)findViewById(R.id.sniffList);
+        filterAddress = null;
+        filterPort = null;
         updateDisplay("To start, choose an option from the menu on the top right",context);
     }
 
@@ -77,14 +85,108 @@ public class SniffActivity extends AppCompatActivity{
     public boolean onOptionsItemSelected(MenuItem item) {
 
         Toast toast;
+        AlertDialog.Builder builder;
         switch (item.getItemId()) {
             case R.id.start_live:
                 toast = Toast.makeText(getApplicationContext(),"Start Live",Toast.LENGTH_SHORT);
                 toast.show();
 
                 // start live service, output to screen
-                if(!tcpdump.isStarted())
-                    tcpdump.start();
+                if(!tcpdump.isStarted()) {
+                    if(filterAddress != null && filterPort != null){
+                        // start tcpdump with filtered address & port
+
+                    } else if (filterAddress != null){
+                        // start tcpdump with filtered address
+
+                    } else if (filterPort != null){
+                        // start tcpdump with filtered port
+
+                    } else {
+                        // start tcpdump with no filters
+                        tcpdump.start();
+                    }
+                }
+                return true;
+
+            case R.id.add_filter_address:
+                toast = Toast.makeText(getApplicationContext(), "Filter Address", Toast.LENGTH_SHORT);
+                toast.show();
+
+                // add filter by address
+                builder = new AlertDialog.Builder(this);
+                builder.setTitle("Filter by Address");
+
+                // set up input
+                final EditText inputAddr = new EditText(this);
+                inputAddr.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(inputAddr);
+
+                // set up buttons
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // additional input check required
+                        filterAddress = inputAddr.getText().toString();
+                        Toast.makeText(getApplicationContext(),"Filter by "+filterAddress, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // cancel
+                        filterAddress = null;
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+
+                return true;
+
+            case R.id.add_filter_port:
+                toast = Toast.makeText(getApplicationContext(), "Filter Port", Toast.LENGTH_SHORT);
+                toast.show();
+
+                // add filter by port
+                builder = new AlertDialog.Builder(this);
+                builder.setTitle("Filter by Port");
+
+                // set up input
+                final EditText inputPort = new EditText(this);
+                inputPort.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(inputPort);
+
+                // set up buttons
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // additional input check required
+                        filterPort = inputPort.getText().toString();
+                        Toast.makeText(getApplicationContext(),"Filter by port "+filterPort, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // cancel
+                        filterPort = null;
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+
+                return true;
+
+            case R.id.filter_clear:
+                toast = Toast.makeText(getApplicationContext(), "Clear Filter", Toast.LENGTH_SHORT);
+                toast.show();
+
+                // clear all filters
+                filterAddress = null;
+                filterPort = null;
+                Toast.makeText(getApplicationContext(), "Filters Cleared", Toast.LENGTH_SHORT).show();
 
                 return true;
 
@@ -93,8 +195,21 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // start live pcap
-                if(!tcpdump.isStartedPCAP())
-                    tcpdump.startPCAP();
+                if(!tcpdump.isStartedPCAP()) {
+                    if(filterAddress != null && filterPort != null){
+                        // start tcpdump PCAP with filtered address & port
+
+                    } else if (filterAddress != null){
+                        // start tcpdump PCAP with filtered address
+
+                    } else if (filterPort != null){
+                        // start tcpdump PCAP with filtered port
+
+                    } else {
+                        // start tcpdump PCAP with no filters
+                        tcpdump.startPCAP();
+                    }
+                }
 
                 return true;
 
