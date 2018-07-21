@@ -249,6 +249,8 @@ public class SniffActivity extends AppCompatActivity{
 
                 itemAdapter = new ItemAdapter(context,dataArray);
                 listView.setAdapter(itemAdapter);
+
+                listView.setSelection(listView.getAdapter().getCount()-1);
             }
         });
     }
