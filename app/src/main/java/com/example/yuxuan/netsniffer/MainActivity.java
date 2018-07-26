@@ -185,6 +185,54 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        File resNexUtil = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
+        if(!resNexUtil.exists()){
+
+            // copy nexutil to memory
+            try{
+                InputStream fis = this.getAssets().open("nexutil");
+                byte[] fbuffer = new byte[fis.available()];
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nexutil");
+                p.waitFor();
+                p.destroy();
+
+            } catch (IOException io){
+
+            } catch (InterruptedException ie) {
+
+            }
+        }
+
+        File resLibFakeIoctl = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+        if(!resLibFakeIoctl.exists()){
+
+            // copy libfakeioctl.so to memory
+            try{
+                InputStream fis = this.getAssets().open("libfakeioctl.so");
+                byte[] fbuffer = new byte[fis.available()];
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+                p.waitFor();
+                p.destroy();
+
+            } catch (IOException io){
+
+            } catch (InterruptedException ie) {
+
+            }
+        }
+
         check = true;
         Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
         TextView tv = findViewById(R.id.editText);

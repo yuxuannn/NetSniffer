@@ -154,7 +154,7 @@ public class SniffActivity extends AppCompatActivity{
 
                 // set up input
                 final EditText inputPort = new EditText(this);
-                inputPort.setInputType(InputType.TYPE_CLASS_TEXT);
+                inputPort.setInputType(InputType.TYPE_CLASS_NUMBER);
                 builder.setView(inputPort);
 
                 // set up buttons
@@ -336,7 +336,9 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         process = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(process.getOutputStream());
-                        os.writeBytes(command);
+                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
+                        os.flush();
+                        os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so "+command);
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
@@ -368,17 +370,17 @@ public class SniffActivity extends AppCompatActivity{
 
                     try {
                         File dumpedFile = new File("/sdcard/Download/output.txt");
-                        /*if(!dumpedFile.exists())
-                            Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
-                        */
+
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
 
 
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
-                            tempData += temp;
-                            tempData += "\n";
+                            if(!temp.contains("0x")){
+                                tempData += temp;
+                                tempData += "\n";
+                            }
                             //updateDisplay(temp);
                         }
 
@@ -401,7 +403,9 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         pcapProcess = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n");
+                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2");
+                        os.flush();
+                        os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so /data/data/com.example.yuxuan.netsniffer/tcpdump -v -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n");
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
@@ -527,6 +531,20 @@ public class SniffActivity extends AppCompatActivity{
             } catch(IOException io){
                 io.printStackTrace();
             }
+
+            // set nexutil back to -p0
+            try{
+                Process process2 = Runtime.getRuntime().exec("su");
+                DataOutputStream os = new DataOutputStream(process2.getOutputStream());
+                os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m0\n");
+                os.flush();
+                os.writeBytes("exit\n");
+                os.flush();
+                os.close();
+            } catch(IOException io){
+                io.printStackTrace();
+            }
+
 
             // to restart the process, re init threads and timers
             init();
