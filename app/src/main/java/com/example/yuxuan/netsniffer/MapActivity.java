@@ -3,6 +3,7 @@ package com.example.yuxuan.netsniffer;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +12,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,7 +48,8 @@ public class MapActivity extends AppCompatActivity {
         context = this;
         nmap = new Nmap(context);
         listView = (ListView)findViewById(R.id.mapList);
-        updateDisplay("To start, enter an address, then choose a option from the menu on the top right",this);
+        updateDisplay("To start, enter an address, then choose a option from the menu on the top right",1,this);
+
     }
 
     @Override
@@ -102,7 +106,7 @@ public class MapActivity extends AppCompatActivity {
                 toast.show();
 
                 //clear list view
-                updateDisplay("To start, enter an address, then choose a option from the menu on the top right",this);
+                updateDisplay("To start, enter an address, then choose a option from the menu on the top right",1,this);
 
                 return true;
 
@@ -116,23 +120,61 @@ public class MapActivity extends AppCompatActivity {
         return tv.getText().toString();
     }
 
-    public void updateDisplay(String data, final Context context){
+    public void updateDisplay(String data, int mode, final Context context){
         final String content = data;
+        final int setClick = mode;
         runOnUiThread(new Runnable(){
             @Override
-            public void run(){
+            public void run() {
 
-                listView = (ListView)findViewById(R.id.mapList);
+                listView = (ListView) findViewById(R.id.mapList);
                 dataArray = content.split("\\n");
 
-                itemAdapter = new ItemAdapter(context,dataArray);
+                itemAdapter = new ItemAdapter(context, dataArray);
                 listView.setAdapter(itemAdapter);
 
-                listView.setSelection(listView.getAdapter().getCount()-1);
+                listView.setSelection(listView.getAdapter().getCount() - 1);
+
+                if (setClick == 2) {
+                    // link to OSActivity
+                    listView.setClickable(true);
+                    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            String dataAtPos = (String) itemAdapter.getItem(position);
+                            String substr = dataAtPos.substring(dataAtPos.indexOf("):")+1,dataAtPos.indexOf("%)"));/*
+                            if(dataAtPos.contains("(JUST GUESSING)"))
+                                substr = "Running (JUST GUESSING):";
+                            else
+                                substr = "Running: ";
+                            String[] split = dataAtPos.split(substr);
+                            String OS = split[1]; // manipulate string */ String OS = substr;
+                            if(OS.contains("No exact OS matches for host")) // split might not happen if no 'OS Details: ' substr exists
+                                OS = "";
+                            else
+                                OS = OS.replaceAll("//s","+");
+
+                            Intent intent;
+                            intent = new Intent(context,OSActivity.class);
+                            intent.putExtra("OS",OS);
+                            startActivity(intent);
+                            showToast(dataAtPos);
+                        }
+                    });
+                }
             }
         });
     }
 
+    public void showToast(String content){
+        final String data = content;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),data,Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     public class Nmap{
 
@@ -264,7 +306,7 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                     //String temp = buffer.toString();
-                    updateDisplay(tempData,context);
+                    updateDisplay(tempData,mode,context);
                     tempData = "";
                     if(reader != null)
                         try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }

@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.help:
                 toast = Toast.makeText(getApplicationContext(), "Help", Toast.LENGTH_SHORT);
                 toast.show();
-                intent = new Intent(this, HelpActivity.class);
+                intent = new Intent(this, OSActivity.class);
                 startActivity(intent);
                 return true;
 
