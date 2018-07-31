@@ -9,7 +9,6 @@
 
     <string name="start_live">Start Live Capture</string>
     <string name="filter_addr">Filter By Address</string>
-    <string name="filter_port">Filter By Port</string>
     <string name="filter_clear">Clear Filter</string>
     <string name="save_pcap">Start PCAP Capture</string>
     <string name="stop_sniff">Stop Sniff</string>

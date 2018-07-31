@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -57,7 +58,6 @@ public class SniffActivity extends AppCompatActivity{
     private Context context;
 
     private String filterAddress;
-    private String filterPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,8 +70,7 @@ public class SniffActivity extends AppCompatActivity{
         tcpdump = new TCPDump(context);
         listView = (ListView)findViewById(R.id.sniffList);
         filterAddress = null;
-        filterPort = null;
-        updateDisplay("To start, choose an option from the menu on the top right",context);
+        updateDisplay("To start, choose an option from the menu on the top right", context);
     }
 
     @Override
@@ -93,14 +92,8 @@ public class SniffActivity extends AppCompatActivity{
 
                 // start live service, output to screen
                 if(!tcpdump.isStarted()) {
-                    if(filterAddress != null && filterPort != null){
-                        // start tcpdump with filtered address & port
-
-                    } else if (filterAddress != null){
+                    if (filterAddress != null){
                         // start tcpdump with filtered address
-
-                    } else if (filterPort != null){
-                        // start tcpdump with filtered port
 
                     } else {
                         // start tcpdump with no filters
@@ -144,48 +137,13 @@ public class SniffActivity extends AppCompatActivity{
 
                 return true;
 
-            case R.id.add_filter_port:
-                toast = Toast.makeText(getApplicationContext(), "Filter Port", Toast.LENGTH_SHORT);
-                toast.show();
-
-                // add filter by port
-                builder = new AlertDialog.Builder(this);
-                builder.setTitle("Filter by Port");
-
-                // set up input
-                final EditText inputPort = new EditText(this);
-                inputPort.setInputType(InputType.TYPE_CLASS_NUMBER);
-                builder.setView(inputPort);
-
-                // set up buttons
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // additional input check required
-                        filterPort = inputPort.getText().toString();
-                        Toast.makeText(getApplicationContext(),"Filter by port "+filterPort, Toast.LENGTH_SHORT).show();
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // cancel
-                        filterPort = null;
-                        dialog.cancel();
-                    }
-                });
-
-                builder.show();
-
-                return true;
-
             case R.id.filter_clear:
                 toast = Toast.makeText(getApplicationContext(), "Clear Filter", Toast.LENGTH_SHORT);
                 toast.show();
 
                 // clear all filters
                 filterAddress = null;
-                filterPort = null;
+                Toast.makeText(getApplicationContext(), "Filters Cleared", Toast.LENGTH_SHORT).show();
 
                 return true;
 
@@ -195,14 +153,8 @@ public class SniffActivity extends AppCompatActivity{
 
                 // start live pcap
                 if(!tcpdump.isStartedPCAP()) {
-                    if(filterAddress != null && filterPort != null){
-                        // start tcpdump PCAP with filtered address & port
-
-                    } else if (filterAddress != null){
+                    if (filterAddress != null){
                         // start tcpdump PCAP with filtered address
-
-                    } else if (filterPort != null){
-                        // start tcpdump PCAP with filtered port
 
                     } else {
                         // start tcpdump PCAP with no filters
@@ -315,6 +267,14 @@ public class SniffActivity extends AppCompatActivity{
         // temporary context
         private Context context;
 
+        private Timer psTimer;
+
+        private TimerTask psTimerTask;
+
+        private Timer nexutilTimer;
+
+        private TimerTask nexutilTimerTask;
+
         public TCPDump(Context context){
             super();
 
@@ -329,6 +289,22 @@ public class SniffActivity extends AppCompatActivity{
         // initializes threads, process and timer task used for scanning
         private void init() {
 
+            nexutilTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    try{
+                        Process process1 = Runtime.getRuntime().exec("su");
+                        DataOutputStream dos = new DataOutputStream(process1.getOutputStream());
+                        dos.writeBytes("nexutil -m2\n");
+                        dos.flush();
+                        dos.writeBytes("exit\n");
+                        dos.close();
+
+                        process1.destroy();
+                    } catch (IOException io) { }
+                }
+            };
+
             // init tcpdump timer task and launch tcpdump on it
             tcpdump = new TimerTask() {
                 public void run() {
@@ -336,31 +312,38 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         process = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(process.getOutputStream());
-                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
+                        os.writeBytes("nexutil -m2\n");
                         os.flush();
-                        os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so "+command);
+                        os.writeBytes(command);
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
                         os.close();
 
-                        // sleep to ensure that the new process is listed by the system
-                        Thread.sleep(1000);
 
+                    } catch (Exception e) {
+                        // handle exception
+                        e.printStackTrace();
+                    }
+                }
+            };
+
+            psTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    try {
                         // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("su");
-                        DataOutputStream dos = new DataOutputStream(process2.getOutputStream());
-                        dos.writeBytes("ps | grep /data/data/com.example.yuxuan.netsniffer/tcpdump > /sdcard/Download/ps.txt\n");
+                        Process psProcess = Runtime.getRuntime().exec("su");
+                        DataOutputStream dos = new DataOutputStream(psProcess.getOutputStream());
+                        dos.writeBytes("ps | grep tcpdump > /sdcard/Download/ps.txt\n");
                         dos.flush();
                         dos.writeBytes("exit\n");
                         dos.flush();
                         dos.close();
 
-                        process2.destroy();
-                    } catch (Exception e) {
-                        // handle exception
-                        e.printStackTrace();
-                    }
+                        process.destroy();
+                        showToast("PS STARTED");
+                    } catch (IOException io) { }
                 }
             };
 
@@ -377,22 +360,18 @@ public class SniffActivity extends AppCompatActivity{
 
                         while ((temp = reader.readLine())!= null) {
                             Log.d("READ PKT:", temp);
-                            if(!temp.contains("0x")){
+                            if(!temp.contains("0x")) {
                                 tempData += temp;
                                 tempData += "\n";
                             }
-                            //updateDisplay(temp);
                         }
 
-                    } catch(IOException io){
-                        Log.d("IOEX",io.getMessage());
-                    }
+                    } catch(IOException io){  }
 
                     updateDisplay(tempData,context);
                     tempData = "";
                     if(reader != null)
-                        try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
-
+                        try { reader.close(); } catch(IOException io) { } //showToast(io.getMessage()); }
 
                 }
             };
@@ -403,27 +382,14 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         pcapProcess = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
+                        os.writeBytes("nexutil -m2\n");
                         os.flush();
-                        os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so /data/data/com.example.yuxuan.netsniffer/tcpdump -v -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n");
+                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -v -i wlan0 -w /sdcard/Download/output-"+counter+".pcap\n");
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
                         os.close();
 
-                        // sleep 1 second to ensure that the new process is listed by the system
-                        Thread.sleep(1000);
-
-                        // get pid of process that exec tcpdump with ps command
-                        Process process2 = Runtime.getRuntime().exec("su");
-                        DataOutputStream dos = new DataOutputStream(process2.getOutputStream());
-                        dos.writeBytes("ps | grep /data/data/com.example.yuxuan.netsniffer/tcpdump > /sdcard/Download/ps.txt\n");
-                        dos.flush();
-                        dos.writeBytes("exit\n");
-                        dos.flush();
-                        dos.close();
-
-                        process2.destroy();
                     } catch (Exception e) {
                         //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
@@ -437,9 +403,16 @@ public class SniffActivity extends AppCompatActivity{
         public void start(){
             isStarted = true;
 
+            nexutilTimer = new Timer();
+            nexutilTimer.schedule(nexutilTimerTask, 0);
+
             // launch tcpdump process
             tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,0);
+            tcpdumpTimer.schedule(tcpdump,1000);
+
+            // launch ps process
+            psTimer = new Timer();
+            psTimer.schedule(psTimerTask, 3000);
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
@@ -454,6 +427,10 @@ public class SniffActivity extends AppCompatActivity{
             pcapTimer = new Timer();
             pcapTimer.schedule(pcapTimerTask,0);
 
+            // launch ps process
+            psTimer = new Timer();
+            psTimer.schedule(psTimerTask,3000);
+
             showToast("Sniffing to PCAP ... ");
         }
 
@@ -465,6 +442,9 @@ public class SniffActivity extends AppCompatActivity{
                 // stop display thread
                 displayTimer.cancel();
 
+                // stop ps thread
+                psTimer.cancel();
+
                 // stop the tcpdump process
                 tcpdumpTimer.cancel();
                 process.destroy();
@@ -473,6 +453,7 @@ public class SniffActivity extends AppCompatActivity{
             }
             if(isStartedPCAP){
                 counter += 1;
+                psTimer.cancel();
                 pcapTimer.cancel();
                 pcapProcess.destroy();
                 showToast("PCAP saved as "+getFileName());
@@ -532,11 +513,11 @@ public class SniffActivity extends AppCompatActivity{
                 io.printStackTrace();
             }
 
-            // set nexutil back to -p0
+            // set nexutil back to -m0
             try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
-                os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m0\n");
+                os.writeBytes("nexutil -m0\n");
                 os.flush();
                 os.writeBytes("exit\n");
                 os.flush();
@@ -553,15 +534,11 @@ public class SniffActivity extends AppCompatActivity{
         }
 
 
-        public boolean isStarted(){ return isStarted;}
+        public boolean isStarted(){ return isStarted; }
 
-        public boolean isStartedPCAP(){
-            return isStartedPCAP;
-        }
+        public boolean isStartedPCAP(){ return isStartedPCAP; }
 
-        public String getFileName(){
-            return "output-"+(counter-1)+".pcap";
-        }
+        public String getFileName(){ return "output-"+(counter-1)+".pcap"; }
 
     }
 

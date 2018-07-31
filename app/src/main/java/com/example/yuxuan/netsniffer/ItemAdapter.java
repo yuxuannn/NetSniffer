@@ -36,7 +36,6 @@ public class ItemAdapter extends BaseAdapter {
         return i;
     }
 
-    // How to
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
 

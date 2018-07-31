@@ -58,7 +58,11 @@ public class MainActivity extends AppCompatActivity {
 
         File res = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
         File res1 = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
-        if(res.exists() && res1.exists())
+        File res2 = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
+        File res3 = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+        File res4 = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
+        File res5 = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+        if(res.exists() && res1.exists() && res2.exists() && res3.exists() && res4.exists() && res5.exists())
            flag = true;
 
         return flag;

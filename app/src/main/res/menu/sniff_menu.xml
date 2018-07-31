@@ -6,8 +6,6 @@
         android:title="@string/save_pcap"/>
     <item android:id="@+id/add_filter_address"
         android:title="@string/filter_addr"/>
-    <item android:id="@+id/add_filter_port"
-        android:title="@string/filter_port"/>
     <item android:id="@+id/stop_sniff"
         android:title="@string/stop_sniff"/>
     <item android:id="@+id/filter_clear"

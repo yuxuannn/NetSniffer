@@ -25,7 +25,7 @@ public class OSActivity extends AppCompatActivity {
         webview.getSettings().setJavaScriptEnabled(true);
         webview.getSettings().setDomStorageEnabled(true);
         webview.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
-        webview.loadUrl("https://www.rapid7.com/db/search?utf8=%E2%9C%93&q="+OS+"&t=a"); // pass OS details into 'search'+'term'
+        webview.loadUrl("https://www.rapid7.com/db/search?utf8=%E2%9C%93&q="+OS+"&t=a"); // pass OS details <'search'+'term'>
 
     }
 

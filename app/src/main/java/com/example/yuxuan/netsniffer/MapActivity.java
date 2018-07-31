@@ -142,13 +142,8 @@ public class MapActivity extends AppCompatActivity {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                             String dataAtPos = (String) itemAdapter.getItem(position);
-                            String substr = dataAtPos.substring(dataAtPos.indexOf("):")+1,dataAtPos.indexOf("%)"));/*
-                            if(dataAtPos.contains("(JUST GUESSING)"))
-                                substr = "Running (JUST GUESSING):";
-                            else
-                                substr = "Running: ";
-                            String[] split = dataAtPos.split(substr);
-                            String OS = split[1]; // manipulate string */ String OS = substr;
+                            String substr = dataAtPos.substring(dataAtPos.indexOf("):")+1,dataAtPos.indexOf("%)"));
+                            String OS = substr;
                             if(OS.contains("No exact OS matches for host")) // split might not happen if no 'OS Details: ' substr exists
                                 OS = "";
                             else
@@ -257,8 +252,6 @@ public class MapActivity extends AppCompatActivity {
                     boolean stop = false;
                     try {
                         File dumpedFile = new File("/sdcard/Download/nmap.txt");
-                        //if(!dumpedFile.exists())
-                        //    Toast.makeText(getApplicationContext(),"'output.txt' does not exist",Toast.LENGTH_SHORT).show();
 
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
@@ -300,17 +293,12 @@ public class MapActivity extends AppCompatActivity {
 
                         }
 
-                    } catch(IOException io){
-                        Log.d("IOEX",io.getMessage());
-                        //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
-                    }
+                    } catch(IOException io){ showToast(io.getMessage()); }
 
-                    //String temp = buffer.toString();
                     updateDisplay(tempData,mode,context);
                     tempData = "";
                     if(reader != null)
-                        try { reader.close(); } catch(IOException io) { }//Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show(); }
-                    //Log.d("Display Thread : ",temp);
+                        try { reader.close(); } catch(IOException io) { showToast(io.getMessage());}
                     if(stop)
                         stop();
                 }
@@ -342,7 +330,7 @@ public class MapActivity extends AppCompatActivity {
 
             try{
                 // a new process is spawned to kill ALL nmap processes, terminates immediately after
-                File psFile = new File("sdcard/Download/ps.txt");
+                File psFile = new File("/sdcard/Download/ps.txt");
                 BufferedReader br = new BufferedReader(new FileReader(psFile));
                 String line, check = "root      ";
                 while((line = br.readLine()) != null) {
@@ -364,9 +352,7 @@ public class MapActivity extends AppCompatActivity {
                         os.close();
                     }
                 }
-            } catch(IOException io){
-                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
-            }
+            } catch(IOException io){ showToast(io.getMessage()); }
 
             // delete temporary ps file
             try{
@@ -377,7 +363,7 @@ public class MapActivity extends AppCompatActivity {
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){ }
+            } catch(IOException io){ showToast(io.getMessage()); }
 
             // delete the temporary output file
             try{
@@ -388,9 +374,7 @@ public class MapActivity extends AppCompatActivity {
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){
-                io.printStackTrace();
-            }
+            } catch(IOException io){ showToast(io.getMessage()); }
 
             command = "";
             init();
@@ -403,7 +387,7 @@ public class MapActivity extends AppCompatActivity {
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
+            // Prompt user for permissions
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,
