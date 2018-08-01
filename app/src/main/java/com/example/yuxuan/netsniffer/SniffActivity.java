@@ -94,6 +94,7 @@ public class SniffActivity extends AppCompatActivity{
                 if(!tcpdump.isStarted()) {
                     if (filterAddress != null){
                         // start tcpdump with filtered address
+                        tcpdump.start(filterAddress);
 
                     } else {
                         // start tcpdump with no filters
@@ -275,6 +276,8 @@ public class SniffActivity extends AppCompatActivity{
 
         private TimerTask nexutilTimerTask;
 
+        private String filterAddress;
+
         public TCPDump(Context context){
             super();
 
@@ -283,6 +286,7 @@ public class SniffActivity extends AppCompatActivity{
             this.isStartedPCAP = false;
             counter = 0;
             tempData = "";
+            filterAddress = null;
             init();
         }
 
@@ -342,7 +346,6 @@ public class SniffActivity extends AppCompatActivity{
                         dos.close();
 
                         process.destroy();
-                        showToast("PS STARTED");
                     } catch (IOException io) { }
                 }
             };
@@ -359,10 +362,15 @@ public class SniffActivity extends AppCompatActivity{
 
 
                         while ((temp = reader.readLine())!= null) {
-                            Log.d("READ PKT:", temp);
+                            Log.d("READ DATA: ", temp);
                             if(!temp.contains("0x")) {
-                                tempData += temp;
-                                tempData += "\n";
+                                if(filterAddress != null) {
+                                    if (temp.contains(filterAddress))
+                                        tempData += temp + "\n";
+                                }
+                                else
+                                    tempData += temp+"\n";
+
                             }
                         }
 
@@ -402,13 +410,14 @@ public class SniffActivity extends AppCompatActivity{
         // start scanning process
         public void start(){
             isStarted = true;
+            filterAddress = null;
 
             nexutilTimer = new Timer();
             nexutilTimer.schedule(nexutilTimerTask, 0);
 
             // launch tcpdump process
             tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,1000);
+            tcpdumpTimer.schedule(tcpdump,2000);
 
             // launch ps process
             psTimer = new Timer();
@@ -422,6 +431,10 @@ public class SniffActivity extends AppCompatActivity{
 
         public void startPCAP(){
             isStartedPCAP = true;
+            filterAddress = null;
+
+            nexutilTimer = new Timer();
+            nexutilTimer.schedule(nexutilTimerTask, 0);
 
             // launch PCAP process
             pcapTimer = new Timer();
@@ -434,6 +447,27 @@ public class SniffActivity extends AppCompatActivity{
             showToast("Sniffing to PCAP ... ");
         }
 
+        public void start(String filterAddress){
+            isStarted = true;
+            this.filterAddress = filterAddress;
+
+            nexutilTimer = new Timer();
+            nexutilTimer.schedule(nexutilTimerTask, 0);
+
+            // launch tcpdump process
+            tcpdumpTimer = new Timer();
+            tcpdumpTimer.schedule(tcpdump,2000);
+
+            // launch ps process
+            psTimer = new Timer();
+            psTimer.schedule(psTimerTask, 3000);
+
+            // send updates to UI every 3s
+            displayTimer = new Timer(true);
+            displayTimer.schedule(displayThread,3000,500); // might require tweaking
+        }
+
+        // public void startPCAP(String filterAddress){ }
 
         // stop scanning process
         public void stop(){
