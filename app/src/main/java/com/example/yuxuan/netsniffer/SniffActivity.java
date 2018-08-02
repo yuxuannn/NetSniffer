@@ -325,10 +325,7 @@ public class SniffActivity extends AppCompatActivity{
                         os.close();
 
 
-                    } catch (Exception e) {
-                        // handle exception
-                        e.printStackTrace();
-                    }
+                    } catch (Exception e) { }
                 }
             };
 
@@ -398,10 +395,7 @@ public class SniffActivity extends AppCompatActivity{
                         os.flush();
                         os.close();
 
-                    } catch (Exception e) {
-                        //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
-                        e.printStackTrace();
-                    }
+                    } catch (Exception e) { }
                 }
             };
         }
@@ -425,7 +419,7 @@ public class SniffActivity extends AppCompatActivity{
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,3000,1000); // might require tweaking
+            displayTimer.schedule(displayThread,3000,500); // might require tweaking
 
         }
 
@@ -519,9 +513,7 @@ public class SniffActivity extends AppCompatActivity{
                         os.close();
                     }
                 }
-            } catch(IOException io){
-                //Toast.makeText(getApplicationContext(),io.getMessage(),Toast.LENGTH_SHORT).show();
-            }
+            } catch(IOException io){  }
 
             // delete temporary ps file
             try{
@@ -543,9 +535,7 @@ public class SniffActivity extends AppCompatActivity{
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){
-                io.printStackTrace();
-            }
+            } catch(IOException io){ }
 
             // set nexutil back to -m0
             try{
@@ -556,9 +546,7 @@ public class SniffActivity extends AppCompatActivity{
                 os.writeBytes("exit\n");
                 os.flush();
                 os.close();
-            } catch(IOException io){
-                io.printStackTrace();
-            }
+            } catch(IOException io){ }
 
 
             // to restart the process, re init threads and timers

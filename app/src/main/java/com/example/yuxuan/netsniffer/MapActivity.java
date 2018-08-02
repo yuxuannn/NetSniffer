@@ -2,6 +2,8 @@ package com.example.yuxuan.netsniffer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,6 +26,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -135,25 +138,88 @@ public class MapActivity extends AppCompatActivity {
 
                 listView.setSelection(listView.getAdapter().getCount() - 1);
 
+                if (setClick == 1) {
+                    // copy MAC address to clipboard
+                    listView.setClickable(true);
+                    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                            //String manipulation, get device MAC address
+                            String dataAtPos = (String) itemAdapter.getItem(position);
+                            if(dataAtPos.contains("MAC Address: ")) {
+                                String[] macAddressArray = dataAtPos.split("MAC Address: ");    // macAddress[1] = " MAC Address: 58:40:4E:DE:A9:DF (UNKNOWN)"
+                                String macAddress = macAddressArray[1];
+
+                                String[] removeUnknown = macAddress.split("\\(");               // mac[0] = "58:40:4E:DE:A9:DF"
+
+                                String mac = removeUnknown[0].replaceAll("\\s", "");
+
+                                //save to clipboard
+                                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("MAC Address", mac);
+                                clipboard.setPrimaryClip(clip);
+                                showToast("MAC copied to clipboard");
+                            }
+                        }
+                    });
+                }
+
                 if (setClick == 2) {
                     // link to OSActivity
                     listView.setClickable(true);
                     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            String dataAtPos = (String) itemAdapter.getItem(position);
-                            String substr = dataAtPos.substring(dataAtPos.indexOf("):")+1,dataAtPos.indexOf("%)"));
-                            String OS = substr;
-                            if(OS.contains("No exact OS matches for host")) // split might not happen if no 'OS Details: ' substr exists
-                                OS = "";
-                            else
-                                OS = OS.replaceAll("//s","+");
 
-                            Intent intent;
-                            intent = new Intent(context,OSActivity.class);
-                            intent.putExtra("OS",OS);
-                            startActivity(intent);
-                            showToast(dataAtPos);
+                            String dataAtPos = (String) itemAdapter.getItem(position);
+                            Log.d("StrMan1", dataAtPos);
+
+                            if(!dataAtPos.contains("Running")){
+                                showToast("No exact OS matches for host");
+                            } else {
+
+                                String[] dataAtPosArray = dataAtPos.split(Pattern.quote(" , "));
+                                Log.d("StrMan2", dataAtPosArray[1]);
+
+                                // split again to get just the running part, removing 'OS details'
+
+                                String[] part = dataAtPosArray[1].split(Pattern.quote("   "));
+                                String runningPart = part[0];                                       // part[0] == "Running (JUST GUESSING): Oracle Virtualbox(96%) QEMU(92%) // no OS details"
+                                Log.d("StrMan3", runningPart);
+                                String osInfoArray[] = runningPart.split(":");
+                                String osInfo;
+
+                                // make sure not out of bounds
+                                if (osInfoArray.length > 1) {
+                                    osInfo = osInfoArray[1];                                        // osInfo == "Oracle Virtualbox(96%) QEMU(92%)"
+                                } else {
+                                    osInfo = "No exact OS matches for host";
+                                }
+
+                                Log.d("StrMan4", osInfo);
+
+                                String substrArray[] = osInfo.split("[,\\-\\|\\(]");          // split by  ","  "("  "-"
+
+                                String substr = substrArray[0];                                     // first OS that appears "Oracle Virtualbox"
+                                Log.d("StrMan5", substr);
+                                String OS = substr;
+
+                                Log.d("StrManOS", OS);
+                                if (OS.contains("No exact OS matches for host")) {                  // split might not happen if no 'OS Details: ' substr exists
+                                    OS = "No exact OS matches for host";
+
+                                } else {
+                                    OS = OS.replaceAll("//s", "+");
+                                    Intent intent;
+                                    intent = new Intent(context, OSActivity.class);
+                                    intent.putExtra("OS", OS);
+                                    Log.d("StrManOSIntent", OS);
+                                    startActivity(intent);
+                                }
+
+                                showToast(dataAtPos);
+                            }
                         }
                     });
                 }
