@@ -429,7 +429,7 @@ public class SniffActivity extends AppCompatActivity{
                         try {
                             pcapProcess = Runtime.getRuntime().exec("su");
                             DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                            os.writeBytes("./data/data/com.example.yuxuan.netsniffer/pcbin -w /sdcard/Download/output-" + counter + ".pcap\n");
+                            os.writeBytes("./data/data/com.example.yuxuan.netsniffer/pcbin -w /sdcard/Download/output-" + counter + ".pcap -i wlan0\n");
                             os.flush();
                             os.writeBytes("exit\n");
                             os.flush();
