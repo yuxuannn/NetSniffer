@@ -2,8 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/start_live"
         android:title="@string/start_live"/>
-    <item android:id="@+id/start_pcap"
-        android:title="@string/save_pcap"/>
+    <item android:id="@+id/start_prom"
+        android:title="@string/start_prom"/>
     <item android:id="@+id/add_filter_address"
         android:title="@string/filter_addr"/>
     <item android:id="@+id/stop_sniff"

@@ -62,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
         File res3 = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
         File res4 = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
         File res5 = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
-        if(res.exists() && res1.exists() && res2.exists() && res3.exists() && res4.exists() && res5.exists())
+        File res6 = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
+        if(res.exists() && res1.exists() && res2.exists() && res3.exists() && res4.exists() && res5.exists() && res6.exists())
            flag = true;
 
         return flag;
@@ -227,6 +228,30 @@ public class MainActivity extends AppCompatActivity {
                 fos.close();
 
                 Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+                p.waitFor();
+                p.destroy();
+
+            } catch (IOException io){
+
+            } catch (InterruptedException ie) {
+
+            }
+        }
+
+        File resPcbin = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
+        if(!resPcbin.exists()){
+
+            // copy pcbin to memory
+            try{
+                InputStream fis = this.getAssets().open("pcbin");
+                byte[] fbuffer = new byte[fis.available()];
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcbin");
                 p.waitFor();
                 p.destroy();
 
