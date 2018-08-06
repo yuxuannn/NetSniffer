@@ -2,20 +2,24 @@ package com.example.yuxuan.netsniffer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +30,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 import java.util.regex.Pattern;
 
 public class MapActivity extends AppCompatActivity {
@@ -123,7 +128,7 @@ public class MapActivity extends AppCompatActivity {
         return tv.getText().toString();
     }
 
-    public void updateDisplay(String data, int mode, final Context context){
+    public void updateDisplay(final String data, int mode, final Context context){
         final String content = data;
         final int setClick = mode;
         runOnUiThread(new Runnable(){
@@ -160,6 +165,262 @@ public class MapActivity extends AppCompatActivity {
                                 ClipData clip = ClipData.newPlainText("MAC Address", mac);
                                 clipboard.setPrimaryClip(clip);
                                 showToast("MAC copied to clipboard");
+                            }
+
+                            //Generate report, nmap done onclick
+                            else if(dataAtPos.contains("done")){
+                                showToast("Report");
+                                AlertDialog.Builder builder;
+
+                                builder = new AlertDialog.Builder(context);
+                                builder.setTitle("Enter comparison (MAC) text file");
+
+                                final EditText inputFilename = new EditText(context);
+                                inputFilename.setInputType(InputType.TYPE_CLASS_TEXT);
+                                builder.setView(inputFilename);
+
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+
+                                        String filename = inputFilename.getText().toString();
+                                        if(filename.equals("")){
+                                            // generate report without comparison
+                                            showToast("Report without comparison");
+
+                                            String noOfIpAddr;
+                                            String noOfHostUp;
+                                            String dateOfScan;
+                                            String timeOfScan;
+                                            String scanDuration;
+
+                                            String temp = dataArray[dataArray.length - 1];
+                                            String[] manip = temp.split("[:\\(\\)]");
+                                            // [0]done, [1]256 IP Addresses, [2]8 hosts up, [3] scanned in 14.20 seconds
+
+                                            noOfIpAddr = manip[1];
+                                            noOfHostUp = manip[2];
+                                            String[] tempManip = manip[3].split("in ");
+                                            scanDuration = tempManip[1];
+
+                                            temp = dataArray[0];
+                                            tempManip = temp.split("at ");
+                                            String dateAndTime[] = tempManip[1].split("\\s",2); // "2018-12-22 15:46 SGT"
+                                            dateOfScan = dateAndTime[0];
+                                            timeOfScan = dateAndTime[1];
+
+                                            String report = "" +
+                                                    "Report Nmap Scan\n\n" +
+                                                    "No of IP Addresses found:  " + noOfIpAddr + "\n"+
+                                                    "No of Hosts up:            " + noOfHostUp + "\n"+
+                                                    "Date of Scan:              " + dateOfScan + "\n"+
+                                                    "Time of Scan:              " + timeOfScan + "\n"+
+                                                    "Scan Time:                 " + scanDuration + "\n\n";
+
+                                            AlertDialog.Builder builderReport;
+                                            builderReport = new AlertDialog.Builder(context);
+                                            builderReport.setMessage(report);
+                                            builderReport.show();
+
+                                        } else {
+                                            // generate report with comparison
+                                            showToast("Report with comparison");
+
+                                            Vector<String> list = new Vector<String>(0);
+                                            Vector<String> found = new Vector<String>(0);
+                                            Vector<String> missing = new Vector<String>(0);
+                                            Vector<String> unauthorized = new Vector<String>(0);
+                                            Vector<String> nmapInfo = new Vector<String>();
+
+                                            File listFile = new File("sdcard/download/"+ filename);
+                                            boolean listFileExists = listFile.isFile();
+                                            if(listFileExists) {
+
+                                                // read nmap output into a vector List[]
+                                                try {
+
+                                                    BufferedReader reader = new BufferedReader(new FileReader(listFile));
+                                                    String temp;
+
+
+                                                    while ((temp = reader.readLine()) != null) {
+                                                        Log.d("READ_NMAP:", temp);
+                                                        if(temp.contains("MAC Address")) {
+                                                            // string manipulation
+                                                            String[] macAddressArray = temp.split("MAC Address:");    // macAddress[1] = " MAC Address: 58:40:4E:DE:A9:DF (UNKNOWN)"
+                                                            String macAddress = macAddressArray[1];
+                                                            String[] removeUnknown = macAddress.split("\\(");               // mac[0] = "58:40:4E:DE:A9:DF"
+                                                            String mac = removeUnknown[0].replaceAll("\\s", "");
+
+
+                                                            Log.d("READ_NMAP1",mac);
+                                                            list.add(mac);
+                                                        }else{
+                                                            Log.d("READ_NMAP1",temp);
+                                                            list.add(temp);
+                                                        }
+                                                    }
+
+
+                                                    reader.close();
+
+                                                } catch (IOException io) {
+                                                    Log.d("IOEX", io.getMessage());
+                                                }
+
+
+
+                                            }// end if listFile exists
+
+                                            // get List view MAC addr into a vector Found[]
+                                            for(int i=0; i<itemAdapter.getCount();++i){
+                                                String temp = (String)itemAdapter.getItem(i);
+                                                Log.d("IADAPTER",temp);
+                                                if(temp.contains("MAC Address")) {
+                                                    // string manipulation
+                                                    String[] macAddressArray = temp.split("MAC Address:");    // macAddress[1] = " MAC Address: 58:40:4E:DE:A9:DF (UNKNOWN)"
+                                                    String macAddress = macAddressArray[1];
+                                                    String[] removeUnknown = macAddress.split("\\(");               // mac[0] = "58:40:4E:DE:A9:DF"
+                                                    String mac = removeUnknown[0].replaceAll("\\s", "");
+                                                    Log.d("IADAPTERMAC",mac);
+                                                    // add to vector
+                                                    found.add(mac);
+                                                }else{// other output info from nmap
+                                                    nmapInfo.add(temp);
+                                                }
+                                            }
+
+                                            if(listFileExists) {
+                                                // check for missing MACs. for every List[i] if == Found [i]
+                                                boolean isMissing;
+                                                for (int i = 0; i < list.size(); ++i) {
+                                                    isMissing = true;
+                                                    for (int j = 0; j < found.size(); ++j) {
+                                                        if (list.get(i).equals(found.get(j))) {
+                                                            isMissing = false;
+                                                            Log.d("MISSING_MATCH","false,"+list.get(i)+","+found.get(j));
+                                                            break;
+                                                        }// end if
+                                                    }//end for
+
+                                                    if (isMissing) {// if match found, doesn't run this code
+                                                        missing.add(list.get(i));
+                                                        Log.d("MISSING",list.get(i));
+                                                    }
+                                                }
+
+                                                // check for unauthorized MACs. for every
+                                                boolean isUnauthorized;
+                                                for (int i = 0; i < found.size(); ++i) {
+                                                    isUnauthorized = true;
+                                                    for (int j = 0; j < list.size(); ++j) {
+                                                        if (found.get(i).equals(list.get(j))) {
+                                                            isUnauthorized = false;
+                                                            Log.d("UNAUTH_MATCH","false,"+found.get(i)+","+list.get(j));
+                                                            break;
+                                                        }// end if
+                                                    }// end for
+
+                                                    if (isUnauthorized) {
+                                                        unauthorized.add(found.get(i));
+                                                        Log.d("UNAUTH",found.get(i));
+                                                    }
+                                                }// end for
+                                            }// end if listFile exist
+
+                                            //----------------- Organize data for report -----------------
+                                            // Starting Nmap 6.47( http://nmap.org ) at 2018-12-22 19:44 SGT
+                                            // Done: 256 IP Addresses (8 hosts up) scanned in 14.20 seconds
+
+                                            // string manipulation for nmapInfo vector
+
+                                            String noOfIpAddr = "";
+                                            String noOfHostUp = "";
+                                            String dateOfScan = "";
+                                            String timeOfScan = "";
+                                            String scanTime = "";
+                                            String noOfMissing = "";
+                                            String noOfUnauthorized = "";
+
+                                            for (int i = 0; i < nmapInfo.size(); ++i) {
+                                                if(nmapInfo.get(i).contains("Done")){
+                                                    // string manipulation
+                                                    String done[] = nmapInfo.elementAt(i).split("[:\\(\\)]");
+                                                    // [0]done, [1]256 IP Addresses, [2]8 hosts up, [3] scanned in 14.20 seconds
+
+                                                    noOfIpAddr = done[1];
+                                                    noOfHostUp = done[2];
+                                                    String scannedIn = done[3];
+                                                    String scannedTime[] = scannedIn.split("in ");
+                                                    scanTime = scannedTime[1];
+
+
+                                                }else if(nmapInfo.get(i).contains("Starting Nmap")){
+                                                    // string manipulation
+
+                                                    String starting[] = nmapInfo.elementAt(i).split("at ");
+                                                    String dateAndTime[] = starting[1].split("\\s",2);// "2018-12-22 15:46 SGT"
+                                                    dateOfScan = dateAndTime[0];
+                                                    timeOfScan = dateAndTime[1];
+                                                }
+                                            }
+
+
+                                            if(listFileExists) {
+                                                noOfMissing = Integer.toString(missing.size());
+                                                noOfUnauthorized = Integer.toString(unauthorized.size());
+                                            }
+
+                                            // generate report
+                                            String report = "" +
+                                                    "Report Nmap Scan\n\n" +
+                                                    "No of IP Addresses found:  " + noOfIpAddr + "\n"+
+                                                    "No of Hosts up:            " + noOfHostUp + "\n"+
+                                                    "Date of Scan:              " + dateOfScan + "\n"+
+                                                    "Time of Scan:              " + timeOfScan + "\n"+
+                                                    "Scan Time:                 " + scanTime + "\n\n";
+
+                                            String macStr = "";
+                                            String missingStr = "\n\t\t\t\t\t\t\t";
+                                            String unauthorizedStr = "\n\t\t\t\t\t\t\t";
+
+                                            // Output vector of missing/unauthorized
+                                            if(listFileExists){
+                                                if(missing.size() > 0) {
+                                                    for(int i = 0; i < missing.size(); ++i) {
+                                                        missingStr += missing.get(i) + "\n\t\t\t\t\t\t\t";
+                                                    }
+                                                }else{
+                                                    missingStr = "-\n";
+                                                }
+
+                                                if(unauthorized.size() > 0){
+                                                    for(int i=0; i<unauthorized.size(); ++i){
+                                                        unauthorizedStr += unauthorized.get(i) + "\n\t\t\t\t\t\t\t";
+                                                    }
+                                                }else{
+                                                    unauthorizedStr = "-\n";
+                                                }
+
+                                                macStr = "" +
+                                                        "No of Missing:         " + missing.size() + " MAC(s) missing.\n\n" +
+                                                        "Missing MACs:          " + missingStr + "\n" +
+                                                        "No of Unauthorized:    " + unauthorized.size() + " MAC(s) unauthorized.\n\n" +
+                                                        "Unauthorized MACs:     " + unauthorizedStr + "\n";
+
+                                                report+=macStr;
+                                            }
+
+                                            Log.d("Report",report);
+
+                                            AlertDialog.Builder builderReport;
+                                            builderReport = new AlertDialog.Builder(context);
+                                            builderReport.setMessage(report);
+                                            builderReport.show();
+                                        }
+                                    }
+                                });
+                                builder.show();
                             }
                         }
                     });
