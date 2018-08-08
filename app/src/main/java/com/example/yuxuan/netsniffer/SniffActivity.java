@@ -303,7 +303,7 @@ public class SniffActivity extends AppCompatActivity{
                     try {
                         Process process1 = Runtime.getRuntime().exec("su");
                         DataOutputStream dos = new DataOutputStream(process1.getOutputStream());
-                        dos.writeBytes("nexutil -m2\n");
+                        dos.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
                         dos.flush();
                         dos.writeBytes("exit\n");
                         dos.close();
@@ -337,7 +337,7 @@ public class SniffActivity extends AppCompatActivity{
                         // create a process with root privilege
                         process = Runtime.getRuntime().exec("su");
                         DataOutputStream os = new DataOutputStream(process.getOutputStream());
-                        os.writeBytes("nexutil -m2\n");
+                        os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
                         os.flush();
                         os.writeBytes(command);
                         os.flush();
@@ -380,17 +380,31 @@ public class SniffActivity extends AppCompatActivity{
                         reader = new BufferedReader(new FileReader(dumpedFile));
                         String temp;
 
-
+                        int counter = 1;
                         while ((temp = reader.readLine()) != null) {
                             Log.d("READ DATA: ", temp);
-                            if (!temp.contains("0x")) {
+
+                            if(isStarted) {
+                                if (!temp.contains("0x")) {
+                                    if (filterAddress != null) {
+                                        if (temp.contains(filterAddress))
+                                            tempData += counter+". " + temp + "\n";
+                                    } else {
+                                        tempData += counter + ". " + temp + "\n";
+                                    }
+                                    counter++;
+                                }
+                            }
+                            if(isStartedProm){
                                 if (filterAddress != null) {
                                     if (temp.contains(filterAddress))
-                                        tempData += temp + "\n";
-                                } else
-                                    tempData += temp + "\n";
-
+                                        tempData += counter+". " + temp + "\n";
+                                } else {
+                                    tempData += counter + ". " + temp + "\n";
+                                }
+                                counter++;
                             }
+
                         }
 
                     } catch (IOException io) {
@@ -414,9 +428,7 @@ public class SniffActivity extends AppCompatActivity{
                             // create a process with root privilege
                             pcapProcess = Runtime.getRuntime().exec("su");
                             DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                            os.writeBytes("nexutil -m2\n");
-                            os.flush();
-                            os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -v -i wlan0 -w /sdcard/Download/output-" + counter + ".pcap\n");
+                            os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so /data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-" + counter + ".pcap\n");
                             os.flush();
                             os.writeBytes("exit\n");
                             os.flush();
@@ -456,7 +468,7 @@ public class SniffActivity extends AppCompatActivity{
 
             // launch tcpdump process
             tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,1000);
+            tcpdumpTimer.schedule(tcpdump,2000);
 
             // sniff to pcap
             pcapTimer = new Timer();
@@ -464,11 +476,11 @@ public class SniffActivity extends AppCompatActivity{
 
             // launch ps process
             psTimer = new Timer();
-            psTimer.schedule(psTimerTask, 3000);
+            psTimer.schedule(psTimerTask, 4000);
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,3000,500); // might require tweaking
+            displayTimer.schedule(displayThread,3000,2000);
 
             showToast("Sniffing to PCAP ... ");
         }
@@ -484,16 +496,16 @@ public class SniffActivity extends AppCompatActivity{
             pcbinTimer.schedule(pcbinTimerTask, 2000);
 
             // sniff to pcap
-            //pcapTimer = new Timer();
-            //pcapTimer.schedule(pcapTimerTask, 0);
+            pcapTimer = new Timer();
+            pcapTimer.schedule(pcapTimerTask, 2500);
 
             // launch ps process
             psTimer = new Timer();
-            psTimer.schedule(psTimerTask, 3000);
+            psTimer.schedule(psTimerTask, 4000);
 
             // send updates to UI
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread, 3000,500);
+            displayTimer.schedule(displayThread, 3000,2000);
 
             showToast("Sniffing to PCAP ... ");
         }
@@ -514,15 +526,15 @@ public class SniffActivity extends AppCompatActivity{
 
             // sniff to pcap
             pcapTimer = new Timer();
-            pcapTimer.schedule(pcapTimerTask, 2000);
+            pcapTimer.schedule(pcapTimerTask, 2500);
 
             // launch ps process
             psTimer = new Timer();
-            psTimer.schedule(psTimerTask, 3000);
+            psTimer.schedule(psTimerTask, 4000);
 
             // send updates to UI every 3s
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread,3000,500); // might require tweaking
+            displayTimer.schedule(displayThread,3000,2000);
         }
 
         public void startProm(String filterAddress){
@@ -536,16 +548,16 @@ public class SniffActivity extends AppCompatActivity{
             pcbinTimer.schedule(pcbinTimerTask, 2000);
 
             // sniff to pcap
-            //pcapTimer = new Timer();
-            //pcapTimer.schedule(pcapTimerTask, 0);
+            pcapTimer = new Timer();
+            pcapTimer.schedule(pcapTimerTask, 2500);
 
             // launch ps process
             psTimer = new Timer();
-            psTimer.schedule(psTimerTask, 3000);
+            psTimer.schedule(psTimerTask, 4000);
 
             // send updates to UI
             displayTimer = new Timer(true);
-            displayTimer.schedule(displayThread, 3000, 500);
+            displayTimer.schedule(displayThread, 3000, 2000);
         }
 
         // stop scanning process
@@ -587,9 +599,9 @@ public class SniffActivity extends AppCompatActivity{
                 tempData = "";
 
                 // pcap
-                //counter += 1;
-                //pcapTimer.cancel();
-                //pcapProcess.destroy();
+                counter += 1;
+                pcapTimer.cancel();
+                pcapProcess.destroy();
 
                 showToast("PCAP saved as "+getFileName());
             }
@@ -648,7 +660,7 @@ public class SniffActivity extends AppCompatActivity{
             try{
                 Process process2 = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(process2.getOutputStream());
-                os.writeBytes("nexutil -m0\n");
+                os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m0\n");
                 os.flush();
                 os.writeBytes("exit\n");
                 os.flush();
