@@ -194,6 +194,8 @@ public class MainActivity extends AppCompatActivity {
             try{
                 InputStream fis = this.getAssets().open("nexutil");
                 byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
 
                 File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
                 OutputStream fos = new FileOutputStream(targetFile);
@@ -218,6 +220,8 @@ public class MainActivity extends AppCompatActivity {
             try{
                 InputStream fis = this.getAssets().open("libfakeioctl.so");
                 byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
 
                 File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
                 OutputStream fos = new FileOutputStream(targetFile);
@@ -242,6 +246,8 @@ public class MainActivity extends AppCompatActivity {
             try{
                 InputStream fis = this.getAssets().open("pcbin");
                 byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
 
                 File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
                 OutputStream fos = new FileOutputStream(targetFile);
@@ -309,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.help:
                 toast = Toast.makeText(getApplicationContext(), "Help", Toast.LENGTH_SHORT);
                 toast.show();
-                intent = new Intent(this, OSActivity.class);
+                intent = new Intent(this, GraphActivity.class);
                 startActivity(intent);
                 return true;
 

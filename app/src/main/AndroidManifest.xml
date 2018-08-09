@@ -37,11 +37,13 @@
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".OSActivity"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+        <activity
+            android:name=".GraphActivity"
+            android:parentActivityName=".MainActivity"/>
 
         <service android:name=".SniffService" />
-
 
 
     </application>
