@@ -19,4 +19,6 @@
     <string name="stop_map">Stop Map Network</string>
     <string name="clear_map">Clear List</string>
     <string name="title_activity_os">OSActivity</string>
+
+    <string name="graph_pcap">Analyse PCAP</string>
 </resources>
