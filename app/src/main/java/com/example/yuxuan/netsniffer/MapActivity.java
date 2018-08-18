@@ -57,7 +57,6 @@ public class MapActivity extends AppCompatActivity {
         nmap = new Nmap(context);
         listView = (ListView)findViewById(R.id.mapList);
         updateDisplay("To start, enter an address, then choose a option from the menu on the top right",1,this);
-
     }
 
     @Override

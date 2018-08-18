@@ -2,10 +2,11 @@
     <string name="app_name">NetSniffer</string>
 
     <string name="res_button">Get Resources</string>
-    <string name="sniff_service">Sniff</string>
-    <string name="map_service">Map</string>
+    <string name="sniff_service">Sniff Packets</string>
+    <string name="map_service">Map Network</string>
     <string name="setting">Settings</string>
     <string name="help">Help</string>
+    <string name="analyze">Analyze PCAP</string>
 
     <string name="start_live">Start Live Capture</string>
     <string name="start_prom">Start Prom Capture</string>
@@ -20,5 +21,8 @@
     <string name="clear_map">Clear List</string>
     <string name="title_activity_os">OSActivity</string>
 
-    <string name="graph_pcap">Analyse PCAP</string>
+    <string name="graph_pcap_src">Analyze PCAP (SRC)</string>
+    <string name="graph_pcap_dst">Analyze PCAP (DST)</string>
+
+    <string name="help_info">Help\n\nMap Network : \nInput target machine/network address into search bar and choose an option from the top right menu\n\n \u005f In normal (ping) map, upon clicking a list item, the MAC address will be copied.(For filtering \u005f sniff) A text file of legitimate MAC addresses can be supplied and a report generated when the last record is clicked after a normal scan.\n \u005f In OS map, upon clicking a list item, a redirection to a vulnerability search website will start.\n\nSniff packets :\nLive(Monitor) Mode\n \u005f Start monitor mode in the menu on the top right. Filters can be set before starting sniff. Every session generates a pcap file.\nPromiscuous Mode\n \u005f Start promiscuous mode in the menu on the top right. Filters can be set before starting sniff. Every session generates a pcap file.\nClear filter\n \u005f Clears currently set filters\nClear list\n \u005f Clears current screen of output.\n\nAnalyze PCAP :\n \u005f Generates a graph with a supplied pcap file depending on source (SRC) or destination (DST), each red line represents one unique address. Might be buggy with large PCAP file\n\n\nCredits :\nBinaries used :\n \u005f nexutil \u0026 libfakeioctl\n \u005f tcpdump\n \u005f nmap\n pcbin \u0026 pcmon\n\nNexus 5 rooted with CF-Auto-Root\n\n\nSS18-2A UOW FYP</string>
 </resources>

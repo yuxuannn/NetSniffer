@@ -65,6 +65,8 @@ public class GraphView extends View {
         int noHoriz = horizontalLabels.length - 1;
         for(int i=0; i<horizontalLabels.length; i++){
             paint.setColor(Color.DKGRAY);
+            if(noHoriz == 0)
+                noHoriz = 2;
             float x = ((graphWidth / noHoriz) * i) + horizontalStart;
             //canvas.drawLine(x,height - border, x, border, paint);
             paint.setTextAlign(Align.CENTER);
@@ -72,8 +74,8 @@ public class GraphView extends View {
                 paint.setTextAlign(Align.RIGHT);
             if(i == 0)
                 paint.setTextAlign(Align.LEFT);
-            paint.setColor(Color.BLACK);
-            canvas.drawText(horizontalLabels[i], x, height - 4, paint);
+            //paint.setColor(Color.BLACK);
+            //canvas.drawText(horizontalLabels[i], x, height - 4, paint);
             xCoord[i] = x;
         }
 
@@ -82,9 +84,10 @@ public class GraphView extends View {
 
         calculateYCoord(yCoord, values);
 
-        if(max != min){
-            paint.setColor(Color.LTGRAY);
+
+
             if(type == BAR){
+                paint.setColor(Color.LTGRAY);
                 float datalength = values.length;
                 float colwidth = (width - (2 * border)) / datalength;
                 for(int i=0; i<values.length; i++) {
@@ -96,21 +99,21 @@ public class GraphView extends View {
            } else {
                 for(int i=0; i<values.length; i++){
                     paint.setColor(Color.RED);
-                    canvas.drawLine(xCoord[i], getHeight() - 20, xCoord[i], (getHeight() - yCoord[i]) - 20,  paint); // !!
+                    canvas.drawLine(xCoord[i], getHeight() - 20, xCoord[i], getHeight() - yCoord[i] < getHeight() - 20 ? getHeight() - yCoord[i] : getHeight() - 20,  paint); // !!
                     //paint.setColor(Color.BLACK);
                     //canvas.drawText(Float.toString(values[i]),xCoord[i] + 5,getHeight() - 20, paint);
-                    paint.setColor(Color.LTGRAY);
-                    if(i>0)
-                        canvas.drawLine(xCoord[i-1],getHeight()-yCoord[i-1], xCoord[i],(getHeight() - yCoord[i]) - 20, paint);
+                    //paint.setColor(Color.LTGRAY);
+                    //if(i>0)
+                    //    canvas.drawLine(xCoord[i-1],getHeight()-yCoord[i-1], xCoord[i],(getHeight() - yCoord[i]) - 20, paint); // !!
                 }
 
                 float avg = getAvg();
                 paint.setColor(Color.GREEN);
-                canvas.drawLine(40, getHeight() - avg, width, (getHeight() - avg) - 20, paint); // !!
+                canvas.drawLine(40, getHeight() - avg, width, getHeight() - avg, paint); // !!
                 paint.setColor(Color.BLACK);
                 canvas.drawText("Avg.",80,getHeight() - avg - 5, paint);
             }
-        }
+
     }
 
     private float getMax(){
@@ -139,7 +142,7 @@ public class GraphView extends View {
 
     private float[] calculateYCoord(float[] yCoord, float[] values){
         for(int i=0; i<values.length; i++)
-            yCoord[i] = (values[i] / getMax()) * getHeight();                // change 2.0f to variable max
+            yCoord[i] = (values[i] / getMax()) * (getHeight() - 20);                // !!
         return yCoord;
     }
 }

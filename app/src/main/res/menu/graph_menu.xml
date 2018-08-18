@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-	<item android:id="@+id/graph_pcap"
-		android:title="@string/graph_pcap"/>
+	<item android:id="@+id/graph_pcap_src"
+		android:title="@string/graph_pcap_src"/>
+	<item android:id="@+id/graph_pcap_dst"
+		android:title="@string/graph_pcap_dst"/>
 </menu>

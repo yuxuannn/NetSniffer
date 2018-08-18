@@ -287,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.sniff_service:
                 if(check) {
-                    toast = Toast.makeText(getApplicationContext(), "Sniff", Toast.LENGTH_SHORT);
+                    toast = Toast.makeText(getApplicationContext(), "Sniff Packets", Toast.LENGTH_SHORT);
                     toast.show();
                     intent = new Intent(this, SniffActivity.class);
                     startActivity(intent);
@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.map_service:
                 if(check) {
-                    toast = Toast.makeText(getApplicationContext(), "Map", Toast.LENGTH_SHORT);
+                    toast = Toast.makeText(getApplicationContext(), "Map Network", Toast.LENGTH_SHORT);
                     toast.show();
                     intent = new Intent(this, MapActivity.class);
                     startActivity(intent);
@@ -305,17 +305,24 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),"NetSniffer cannot proceed",Toast.LENGTH_SHORT).show();
                 return true;
 
+            case R.id.analyze:
+                toast = Toast.makeText(getApplicationContext(), "Analyze PCAP", Toast.LENGTH_SHORT);
+                toast.show();
+                intent = new Intent(this, GraphActivity.class);
+                startActivity(intent);
+                return true;
+/*
             case R.id.setting:
                 toast = Toast.makeText(getApplicationContext(), "Settings", Toast.LENGTH_SHORT);
                 toast.show();
                 intent = new Intent(this, SettingActivity.class);
                 startActivity(intent);
                 return true;
-
+*/
             case R.id.help:
                 toast = Toast.makeText(getApplicationContext(), "Help", Toast.LENGTH_SHORT);
                 toast.show();
-                intent = new Intent(this, GraphActivity.class);
+                intent = new Intent(this, HelpActivity.class);
                 startActivity(intent);
                 return true;
 
