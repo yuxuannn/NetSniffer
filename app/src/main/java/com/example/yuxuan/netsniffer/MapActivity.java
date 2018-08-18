@@ -80,7 +80,7 @@ public class MapActivity extends AppCompatActivity {
                     nmap.start("/data/data/com.example.yuxuan.netsniffer/nmap -sP "+getAddress()+" --datadir /data/data/com.example.yuxuan.netsniffer/ > /sdcard/Download/nmap.txt\n",1);
                 else
                     Toast.makeText(getApplicationContext(),"Map already started",Toast.LENGTH_SHORT).show();
-                
+
                 return true;
 
             case R.id.start_OS:
