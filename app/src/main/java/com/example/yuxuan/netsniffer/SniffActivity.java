@@ -425,7 +425,7 @@ public class SniffActivity extends AppCompatActivity{
                             // create a process with root privilege
                             pcapProcess = Runtime.getRuntime().exec("su");
                             DataOutputStream os = new DataOutputStream(pcapProcess.getOutputStream());
-                            os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so /data/data/com.example.yuxuan.netsniffer/tcpdump -i wlan0 -w /sdcard/Download/output-" + counter + ".pcap\n");
+                            os.writeBytes("LD_PRELOAD=/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so ./data/data/com.example.yuxuan.netsniffer/pcmon -w /sdcard/Download/output-" + counter + ".pcap  -i wlan0\n");
                             os.flush();
                             os.writeBytes("exit\n");
                             os.flush();
