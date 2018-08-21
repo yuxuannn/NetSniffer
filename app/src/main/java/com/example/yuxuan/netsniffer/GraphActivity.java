@@ -4,7 +4,9 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -39,10 +41,12 @@ public class GraphActivity extends AppCompatActivity {
     private TimerTask graphTimerTask;
     private TimerTask rmTimerTask;
 
-    private String filename;
+    //private String filename;
     private float[] values;
     private String[] verticalLabels;
     private String[] horizontalLabels;
+
+    private boolean type;                       // 0 - SRC / 1 - DST
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,416 +74,43 @@ public class GraphActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),"Graph PCAP (SRC)",Toast.LENGTH_SHORT).show();
 
                 // open pcap with tcpdump -r > textfile, manipulate data then pass to GraphView
+                type = false;
 
-                builder = new AlertDialog.Builder(context);
-                builder.setTitle("Enter PCAP file");
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                /*** REQUIRES MIME TYPE FOR PCAP FILES ***/
+                intent.setType("images/*");
 
-                final EditText inputFilename = new EditText(context);
-                inputFilename.setInputType(InputType.TYPE_CLASS_TEXT);
-                builder.setView(inputFilename);
-
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        filename = inputFilename.getText().toString();
-                        if (filename.equals(""))
-                            showToast("Invalid filename");
-                        else{
-
-                                File file = new File("/sdcard/Download/"+filename);
-                                if(!file.exists()){
-                                    showToast("Invalid filename");
-                                } else{
-                                    // read from file - extract data to vectors
-
-                                    Vector<AddressPair> srcVec = new Vector<AddressPair>();
-                                    Vector<AddressPair> dscVec = new Vector<AddressPair>();
-
-                                    init(filename);
-                                    Timer readPCAP = new Timer();
-                                    readPCAP.schedule(graphTimerTask,0);
-
-                                    try {
-                                        Thread.sleep(4000);
-                                    }catch (InterruptedException ie){
-                                    }
-
-                                    try{
-                                        File dumpedFile = new File("/sdcard/download/graph.txt");
-
-                                        BufferedReader br = new BufferedReader(new FileReader(dumpedFile));
-
-                                        String temp;
-                                        int srcNo = 2;// number when split
-                                        int destNo = 4;// number when split
-
-
-                                        int count = 0;
-                                        while((temp = br.readLine()) != null){
-
-                                            if(count == 0){
-                                                // if promiscuous
-                                                String split[] = temp.split(" ");
-                                                if(!split[3].contains(">")){
-                                                    ++srcNo;
-                                                    ++destNo;
-                                                }
-                                                ++count;
-                                            }
-
-                                            if(!temp.contains("0x")){
-                                            String[] line = temp.split(" ");
-
-                                            int srcPos = srcNo;
-                                            int destPos = destNo;
-
-                                            if(line[2].contains("ARP")){
-                                                srcPos = srcNo + 1;
-                                                destPos = destNo + 1;
-
-                                                if(line[3].contains("Request")){
-                                                    srcPos = srcNo + 2;
-                                                    destPos = destNo + 2;
-                                                }
-                                            }
-
-
-                                            String src = line[srcPos];
-                                            String dest = line[destPos];
-
-                                            if(line[3].contains("Unknown")){
-                                                dest = line[destPos + 3];
-                                            }
-
-                                            boolean isFirstEntry = false;
-                                            boolean srcFound = false;
-                                            boolean destFound = false;
-                                            int index = 0;
-
-                                            if(srcVec.size() < 1){
-                                                isFirstEntry = true;
-                                            }
-
-                                            //if src vector empty
-                                            if(isFirstEntry){
-                                                //add to vector
-                                                AddressPair pair = new AddressPair(src,1);
-                                                srcVec.add(pair);
-                                            }else{
-                                                //check if in srcVector
-                                                for(int j=0; j<srcVec.size(); ++j){
-                                                    if(srcVec.get(j).addrEquals(src)){
-                                                        srcFound = true;
-                                                        index = j;
-                                                        break;
-                                                    }
-                                                }
-                                            }// end if
-
-                                            if(srcFound){
-                                                //increment value by 1
-                                                srcVec.get(index).incrementByOne();
-                                            }else{
-                                                if(!isFirstEntry){
-                                                    //add to vector
-                                                    AddressPair pair = new AddressPair(src,1);
-                                                    srcVec.add(pair);
-                                                }
-                                            }
-
-                                            isFirstEntry = false;
-
-                                            if(dscVec.size() < 1){
-                                                isFirstEntry = true;
-                                            }
-
-                                            //if dest vector empty
-                                            if(isFirstEntry){
-                                                //add to vector
-                                                AddressPair pair = new AddressPair(dest,1);
-                                                dscVec.add(pair);
-                                            }else{
-                                                //check if in destVector
-                                                for(int j=0; j<dscVec.size(); ++j){
-                                                    if(dscVec.get(j).addrEquals(dest)){
-                                                        destFound = true;
-                                                        index = j;
-                                                        break;
-                                                    }
-                                                }
-                                            }// end if
-
-                                            if(destFound){
-                                                //increment value by 1
-                                                dscVec.get(index).incrementByOne();
-                                            }else{
-                                                if(!isFirstEntry){
-                                                    //add to vector
-                                                    AddressPair pair = new AddressPair(dest,1);
-                                                    dscVec.add(pair);
-                                                }
-                                            }
-                                        }}// end while, readline by line
-
-                                        if(br != null){
-                                            try{
-                                                br.close();
-                                            }catch(IOException io){
-                                                //System.out.println(io.getMessage());
-                                            }
-                                        }// end if
-
-
-                                        //showToast("dscVec size: "+Integer.toString(dscVec.size()));
-                                        values = new float[srcVec.size()];
-                                        verticalLabels = new String[7];
-                                        horizontalLabels = new String[srcVec.size()];
-
-                                        float max = -1;
-                                        for(int i=0; i<srcVec.size(); i++){
-                                            horizontalLabels[i] = srcVec.get(i).getAddr();
-                                            values[i] = srcVec.get(i).getValue();
-                                            if(values[i] > max)
-                                                max = values[i];
-                                        }
-
-                                        for(int i=0; i<6; i++)
-                                            verticalLabels[i] = Float.toString(max * ((6.0f-i)/6.0f));
-
-                                        verticalLabels[6] = "0";
-
-                                        GraphView graphView = new GraphView(context, values, "Analysis - "+filename+" @ "+DateFormat.getDateTimeInstance().format(new Date()), horizontalLabels, verticalLabels, false);
-                                        setContentView(graphView);
-
-                                        Timer rmGraph = new Timer();
-                                        rmGraph.schedule(rmTimerTask,0);
-
-                                    }catch(Exception e){
-                                        //showToast(e.getMessage());
-                                    }// end try-catch
-
-                                }
-                        }
-                    }
-                });
-
-                builder.show();
-
+                try {
+                    int OPEN_REQUEST_CODE = 41;
+                    startActivityForResult(intent, OPEN_REQUEST_CODE);
+                } catch (android.content.ActivityNotFoundException ex) {
+                    // Potentially direct the user to the Market with a Dialog
+                    Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+                }
                 return true;
+
 
             case R.id.graph_pcap_dst:
                 Toast.makeText(getApplicationContext(),"Graph PCAP (DST)",Toast.LENGTH_SHORT).show();
 
                 // open pcap with tcpdump -r > textfile, manipulate data then pass to GraphView
+                type = true;
 
-                builder = new AlertDialog.Builder(context);
-                builder.setTitle("Enter PCAP file");
+                Intent intent1 = new Intent(Intent.ACTION_GET_CONTENT);
+                intent1.addCategory(Intent.CATEGORY_OPENABLE);
+                /*** REQUIRES MIME TYPE FOR PCAP FILES (IN ANDROIDMANIFEST) ***/
+                intent1.setType("plain/text");
 
-                final EditText inputFilename1 = new EditText(context);
-                inputFilename1.setInputType(InputType.TYPE_CLASS_TEXT);
-                builder.setView(inputFilename1);
-
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        filename = inputFilename1.getText().toString();
-                        if (filename.equals(""))
-                            showToast("Invalid filename");
-                        else{
-
-                            File file = new File("/sdcard/Download/"+filename);
-                            if(!file.exists()){
-                                showToast("Invalid filename");
-                            } else{
-                                // read from file - extract data to vectors
-
-                                Vector<AddressPair> srcVec = new Vector<AddressPair>();
-                                Vector<AddressPair> dscVec = new Vector<AddressPair>();
-
-                                init(filename);
-                                Timer readPCAP = new Timer();
-                                readPCAP.schedule(graphTimerTask,0);
-
-                                try {
-                                    Thread.sleep(4000);
-                                }catch (InterruptedException ie){
-                                }
-
-                                try{
-                                    File dumpedFile = new File("/sdcard/download/graph.txt");
-
-                                    BufferedReader br = new BufferedReader(new FileReader(dumpedFile));
-
-                                    String temp;
-                                    int srcNo = 2;  // number when split
-                                    int destNo = 4; // number when split
-
-
-                                    int count = 0;
-                                    while((temp = br.readLine()) != null){
-
-                                        if(count == 0){
-                                            // if promiscuous
-                                            String split[] = temp.split(" ");
-                                            if(!split[3].contains(">")){
-                                                ++srcNo;
-                                                ++destNo;
-                                            }
-                                            ++count;
-                                        }
-
-                                        if(!temp.contains("0x")){
-                                            String[] line = temp.split(" ");
-
-                                            int srcPos = srcNo;
-                                            int destPos = destNo;
-
-                                            if(line[2].contains("ARP")){
-                                                srcPos = srcNo + 1;
-                                                destPos = destNo + 1;
-
-                                                if(line[3].contains("Request")){
-                                                    srcPos = srcNo + 2;
-                                                    destPos = destNo + 2;
-                                                }
-                                            }
-
-
-                                            String src = line[srcPos];
-                                            String dest = line[destPos];
-
-                                            if(line[3].contains("Unknown")){
-                                                dest = line[destPos + 3];
-                                            }
-
-                                            boolean isFirstEntry = false;
-                                            boolean srcFound = false;
-                                            boolean destFound = false;
-                                            int index = 0;
-
-                                            if(srcVec.size() < 1){
-                                                isFirstEntry = true;
-                                            }
-
-                                            //if src vector empty
-                                            if(isFirstEntry){
-                                                //add to vector
-                                                AddressPair pair = new AddressPair(src,1);
-                                                srcVec.add(pair);
-                                            }else{
-                                                //check if in srcVector
-                                                for(int j=0; j<srcVec.size(); ++j){
-                                                    if(srcVec.get(j).addrEquals(src)){
-                                                        srcFound = true;
-                                                        index = j;
-                                                        break;
-                                                    }
-                                                }
-                                            }// end if
-
-                                            if(srcFound){
-                                                //increment value by 1
-                                                srcVec.get(index).incrementByOne();
-                                            }else{
-                                                if(!isFirstEntry){
-                                                    //add to vector
-                                                    AddressPair pair = new AddressPair(src,1);
-                                                    srcVec.add(pair);
-                                                }
-                                            }
-
-
-                                            isFirstEntry = false;
-
-                                            if(dscVec.size() < 1){
-                                                isFirstEntry = true;
-                                            }
-
-                                            //if dest vector empty
-                                            if(isFirstEntry){
-                                                //add to vector
-                                                AddressPair pair = new AddressPair(dest,1);
-                                                dscVec.add(pair);
-                                            }else{
-                                                //check if in destVector
-                                                for(int j=0; j<dscVec.size(); ++j){
-                                                    if(dscVec.get(j).addrEquals(dest)){
-                                                        destFound = true;
-                                                        index = j;
-                                                        break;
-                                                    }
-                                                }
-                                            }// end if
-
-                                            if(destFound){
-                                                //increment value by 1
-                                                dscVec.get(index).incrementByOne();
-                                            }else{
-                                                if(!isFirstEntry){
-                                                    //add to vector
-                                                    AddressPair pair = new AddressPair(dest,1);
-                                                    dscVec.add(pair);
-                                                }
-                                            }
-                                        }}// end while, readline by line
-
-                                    if(br != null){
-                                        try{
-                                            br.close();
-                                        }catch(IOException io){
-                                            //System.out.println(io.getMessage());
-                                        }
-                                    }// end if
-
-
-                                    //showToast("dscVec size: "+Integer.toString(dscVec.size()));
-                                    values = new float[dscVec.size()];
-                                    verticalLabels = new String[7];
-                                    horizontalLabels = new String[dscVec.size()];
-
-                                    float max = -1;
-                                    for(int i=0; i<dscVec.size(); i++){
-                                        horizontalLabels[i] = dscVec.get(i).getAddr();
-                                        values[i] = dscVec.get(i).getValue();
-                                        if(values[i] > max)
-                                            max = values[i];
-                                    }
-
-                                    for(int i=0; i<6; i++)
-                                        verticalLabels[i] = Float.toString(max * ((6.0f-i)/6.0f));
-
-                                    verticalLabels[6] = "0";
-/*
-                                        float[] testValues;
-                                        String[] testHorizLabels;
-                                        String[] testVertLabels;
-                                        testValues = new float [] {1200f, 5f, 12f, 54f, 430f, 731f, 1000f, 5f, 72f, 43f, 64f, 74f, 234f, 235f, 455f, 123f};
-                                        testHorizLabels = new String [] {"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"};
-                                        testVertLabels = new String[] {"1200","1000","800","600","400","200","0"};
-
-                                        GraphView graphView = new GraphView(context ,testValues,"Analysis - "+filename+" @ "+DateFormat.getDateTimeInstance().format(new Date()),testHorizLabels,testVertLabels,false);
-                                        setContentView(graphView);
-  */
-                                    GraphView graphView = new GraphView(context, values, "Analysis (DST) - "+filename+" @ "+DateFormat.getDateTimeInstance().format(new Date()), horizontalLabels, verticalLabels, false);
-                                    setContentView(graphView);
-
-                                    Timer rmGraph = new Timer();
-                                    rmGraph.schedule(rmTimerTask,0);
-
-                                }catch(Exception e){
-                                    //showToast(e.getMessage());
-                                }// end try-catch
-
-                            }
-                        }
-                    }
-                });
-
-                builder.show();
-
+                try {
+                    int OPEN_REQUEST_CODE = 41;
+                    startActivityForResult(intent1, OPEN_REQUEST_CODE);
+                } catch (android.content.ActivityNotFoundException ex) {
+                    // Potentially direct the user to the Market with a Dialog
+                    Toast.makeText(this, "Please install a file manager", Toast.LENGTH_SHORT).show();
+                }
                 return true;
+
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -496,7 +127,7 @@ public class GraphActivity extends AppCompatActivity {
                 try{
                     Process process = Runtime.getRuntime().exec("su");
                     DataOutputStream os = new DataOutputStream(process.getOutputStream());
-                    os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -ttttnnr /sdcard/Download/"+filename+" > /sdcard/Download/graph.txt\n");
+                    os.writeBytes("/data/data/com.example.yuxuan.netsniffer/tcpdump -ttttnnr "+filename+" > /sdcard/Download/graph.txt\n");
                     os.flush();
                     os.writeBytes("exit\n");
                     os.flush();
@@ -534,12 +165,255 @@ public class GraphActivity extends AppCompatActivity {
         });
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        Uri currentUri;
+        String path;
+
+        if(resultData == null){
+            return;
+        }
+
+        if (resultCode == Activity.RESULT_OK)
+        {
+            if (requestCode == 41) {
+                if (resultData != null) {
+                    currentUri = resultData.getData();
+                    path = currentUri.getPath();
+
+                    /*** FILE PATH MANIPULATION ***/
+                    String[] str;
+                    if (path.contains("primary")) { // sdcard -> /storage/self/primary
+                        str = path.split(":");
+                        path = str[1];      // Download/list.txt
+                        path = "/sdcard/" + path; // /sdcard/ short for "storage/emulated/0/"
+
+                        // The only time you'll see items (sub folders) there are after you "pin" them as "available offline" from the Drive app.
+
+                        //if(path.contains("com.google.android.apps.docs")){
+
+                        //    path = sdcard/android/data/com.google.android.apps.docs/+path;
+
+                        //}
+                    }
+
+                    else if(path.contains("/file")){
+                        str = path.split("file");
+                        path = str[1];                      // /file/sdcard/Download/output.pcap
+                    }
+
+                    /*** ERROR HANDLING FOR BAD PATH / INVALID FILE ***/
+                    showToast(path);
+
+                    Vector<AddressPair> srcVec = new Vector<AddressPair>();
+                    Vector<AddressPair> dscVec = new Vector<AddressPair>();
+
+                    init(path);
+                    Timer readPCAP = new Timer();
+                    readPCAP.schedule(graphTimerTask,0);
+
+                    try {
+                        Thread.sleep(4500);
+                    }catch (InterruptedException ie){
+                    }
+
+                    try{
+                        File dumpedFile = new File("/sdcard/Download/graph.txt");
+
+                        BufferedReader br = new BufferedReader(new FileReader(dumpedFile));
+
+                        String temp;
+                        int srcNo = 2;  // number when split
+                        int destNo = 4; // number when split
+
+
+                        int count = 0;
+                        while((temp = br.readLine()) != null){
+
+                            if(count == 0){
+                                // if promiscuous
+                                String split[] = temp.split(" ");
+                                if(!split[3].contains(">")){
+                                    ++srcNo;
+                                    ++destNo;
+                                }
+                                ++count;
+                            }
+
+                            if(!temp.contains("0x")){
+                                String[] line = temp.split(" ");
+
+                                int srcPos = srcNo;
+                                int destPos = destNo;
+
+                                if(line[2].contains("ARP")){
+                                    srcPos = srcNo + 1;
+                                    destPos = destNo + 1;
+
+                                    if(line[3].contains("Request")){
+                                        srcPos = srcNo + 2;
+                                        destPos = destNo + 2;
+                                    }
+                                }
+
+
+                                String src = line[srcPos];
+                                String dest = line[destPos];
+
+                                if(line[3].contains("Unknown")){
+                                    dest = line[destPos + 3];
+                                }
+
+                                boolean isFirstEntry = false;
+                                boolean srcFound = false;
+                                boolean destFound = false;
+                                int index = 0;
+
+                                if(srcVec.size() < 1){
+                                    isFirstEntry = true;
+                                }
+
+                                //if src vector empty
+                                if(isFirstEntry){
+                                    //add to vector
+                                    AddressPair pair = new AddressPair(src,1);
+                                    srcVec.add(pair);
+                                }else{
+                                    //check if in srcVector
+                                    for(int j=0; j<srcVec.size(); ++j){
+                                        if(srcVec.get(j).addrEquals(src)){
+                                            srcFound = true;
+                                            index = j;
+                                            break;
+                                        }
+                                    }
+                                }// end if
+
+                                if(srcFound){
+                                    //increment value by 1
+                                    srcVec.get(index).incrementByOne();
+                                }else{
+                                    if(!isFirstEntry){
+                                        //add to vector
+                                        AddressPair pair = new AddressPair(src,1);
+                                        srcVec.add(pair);
+                                    }
+                                }
+
+                                isFirstEntry = false;
+
+                                if(dscVec.size() < 1){
+                                    isFirstEntry = true;
+                                }
+
+                                //if dest vector empty
+                                if(isFirstEntry){
+                                    //add to vector
+                                    AddressPair pair = new AddressPair(dest,1);
+                                    dscVec.add(pair);
+                                }else{
+                                    //check if in destVector
+                                    for(int j=0; j<dscVec.size(); ++j){
+                                        if(dscVec.get(j).addrEquals(dest)){
+                                            destFound = true;
+                                            index = j;
+                                            break;
+                                        }
+                                    }
+                                }// end if
+
+                                if(destFound){
+                                    //increment value by 1
+                                    dscVec.get(index).incrementByOne();
+                                }else{
+                                    if(!isFirstEntry){
+                                        //add to vector
+                                        AddressPair pair = new AddressPair(dest,1);
+                                        dscVec.add(pair);
+                                    }
+                                }
+                            }}// end while, readline by line
+
+                        if(br != null){
+                            try{
+                                br.close();
+                            }catch(IOException io){
+                                //System.out.println(io.getMessage());
+                            }
+                        }// end if
+
+
+                        if(type == false) {
+                            values = new float[srcVec.size()];
+                            verticalLabels = new String[7];
+                            horizontalLabels = new String[srcVec.size()];
+
+                            float max = -1;
+                            for (int i = 0; i < srcVec.size(); i++) {
+                                horizontalLabels[i] = srcVec.get(i).getAddr();
+                                values[i] = srcVec.get(i).getValue();
+                                if (values[i] > max)
+                                    max = values[i];
+                            }
+
+                            for (int i = 0; i < 6; i++)
+                                verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
+
+                            verticalLabels[6] = "0";
+
+                        } else {
+                            values = new float[dscVec.size()];
+                            verticalLabels = new String[7];
+                            horizontalLabels = new String[dscVec.size()];
+
+                            float max = -1;
+                            for (int i = 0; i < dscVec.size(); i++) {
+                                horizontalLabels[i] = dscVec.get(i).getAddr();
+                                values[i] = dscVec.get(i).getValue();
+                                if (values[i] > max)
+                                    max = values[i];
+                            }
+
+                            for (int i = 0; i < 6; i++)
+                                verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
+
+                            verticalLabels[6] = "0";
+                        }
+/*
+                        float[] testValues;
+                        String[] testHorizLabels;
+                        String[] testVertLabels;
+                        testValues = new float [] {1200f, 5f, 12f, 54f, 430f, 731f, 1000f, 5f, 72f, 43f, 64f, 74f, 234f, 235f, 455f, 123f};
+                        testHorizLabels = new String [] {"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p"};
+                        testVertLabels = new String[] {"1200","1000","800","600","400","200","0"};
+
+                        GraphView graphView = new GraphView(context ,testValues,"Analysis - "+filename+" @ "+DateFormat.getDateTimeInstance().format(new Date()),testHorizLabels,testVertLabels,false);
+                        setContentView(graphView);
+  */
+                        String mode;
+                        if(!type)
+                            mode = "SRC";
+                        else
+                            mode = "DST";
+
+                        GraphView graphView = new GraphView(context, values, "Analysis ("+mode+") - "+path+" @ "+DateFormat.getDateTimeInstance().format(new Date()), horizontalLabels, verticalLabels, false);
+                        setContentView(graphView);
+
+                        Timer rmGraph = new Timer();
+                        rmGraph.schedule(rmTimerTask,0);
+
+                    }catch(Exception e){
+                        //showToast(e.getMessage());
+                    }// end try-catch
+
+                }
+            }}}
+
     public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
+        // Check if write permissions allowed
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
+            // Prompt user for permission
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,

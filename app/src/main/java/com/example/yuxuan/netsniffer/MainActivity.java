@@ -1,6 +1,8 @@
 package com.example.yuxuan.netsniffer;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -60,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
         File res4 = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
         File res5 = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
         File res6 = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
-        if(res.exists() && res1.exists() && res2.exists() && res3.exists() && res4.exists() && res5.exists() && res6.exists())
+        File res7 = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
+        if(res.exists() && res1.exists() && res2.exists() && res3.exists() && res4.exists() && res5.exists() && res6.exists() && res7.exists())
            flag = true;
 
         return flag;
@@ -265,6 +268,32 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        File resPcmon = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
+        if(!resPcmon.exists()){
+
+            // copy pcmon to memory
+            try{
+                InputStream fis = this.getAssets().open("pcmon");
+                byte[] fbuffer = new byte[fis.available()];
+                fis.read(fbuffer);
+                fis.close();
+
+                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
+                OutputStream fos = new FileOutputStream(targetFile);
+                fos.write(fbuffer);
+                fos.close();
+
+                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcmon");
+                p.waitFor();
+                p.destroy();
+
+            } catch (IOException io){
+
+            } catch (InterruptedException ie) {
+
+            }
+        }
+
         check = true;
         Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
         TextView tv = findViewById(R.id.editText);
@@ -331,9 +360,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
+
+                    /**
+                     * A native method that is implemented by the 'native-lib' native library,
+                     * which is packaged with this application.
+                     */
     public native String stringFromJNI();
 }

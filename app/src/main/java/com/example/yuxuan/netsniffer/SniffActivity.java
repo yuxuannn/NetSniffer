@@ -224,9 +224,6 @@ public class SniffActivity extends AppCompatActivity{
         private boolean isStartedProm;
 
         /***tcpdump***/
-        // command to launch tcpdump
-        private final String command = "/data/data/com.example.yuxuan.netsniffer/tcpdump -l -i wlan0 > /sdcard/Download/output.txt\n";
-
         //  process where tcpdump will be executed
         private Process process;
 
@@ -339,7 +336,7 @@ public class SniffActivity extends AppCompatActivity{
                         DataOutputStream os = new DataOutputStream(process.getOutputStream());
                         os.writeBytes("/data/data/com.example.yuxuan.netsniffer/nexutil -m2\n");
                         os.flush();
-                        os.writeBytes(command);
+                        os.writeBytes("./data/data/com.example.yuxuan.netsniffer/pcmon -i wlan0 > /sdcard/Download/output.txt\n");
                         os.flush();
                         os.writeBytes("exit\n");
                         os.flush();
@@ -358,7 +355,7 @@ public class SniffActivity extends AppCompatActivity{
                         // get pid of process that exec tcpdump with ps command
                         Process psProcess = Runtime.getRuntime().exec("su");
                         DataOutputStream dos = new DataOutputStream(psProcess.getOutputStream());
-                        dos.writeBytes("ps | grep -e tcpdump -e pcbin > /sdcard/Download/ps.txt\n");
+                        dos.writeBytes("ps | grep -e tcpdump -e pcbin  -e pcmon > /sdcard/Download/ps.txt\n");
                         dos.flush();
                         dos.writeBytes("exit\n");
                         dos.flush();

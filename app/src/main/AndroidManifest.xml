@@ -19,7 +19,6 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -41,10 +40,20 @@
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
         <activity
             android:name=".GraphActivity"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".MainActivity">
+  <!--      <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <data android:scheme="file" />
+                <data android:mimeType="/" />
+                <data android:pathPattern=".*\\.pcap" />
+                <data android:host="*" />
+            </intent-filter> -->
+        </activity>
 
         <service android:name=".SniffService" />
-
 
     </application>
 
