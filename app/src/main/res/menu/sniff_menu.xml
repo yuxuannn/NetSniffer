@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/start_live"
+    <item android:id="@+id/start_mon"
         android:title="@string/start_live"/>
     <item android:id="@+id/start_prom"
         android:title="@string/start_prom"/>
     <item android:id="@+id/add_filter_address"
         android:title="@string/filter_addr"/>
-    <item android:id="@+id/stop_sniff"
-        android:title="@string/stop_sniff"/>
+    <item android:id="@+id/stop_cap"
+        android:title="@string/stop_cap"/>
     <item android:id="@+id/filter_clear"
         android:title="@string/filter_clear"/>
     <item android:id="@+id/clear_live"

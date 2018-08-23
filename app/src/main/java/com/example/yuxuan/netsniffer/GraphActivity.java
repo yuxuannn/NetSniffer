@@ -100,7 +100,7 @@ public class GraphActivity extends AppCompatActivity {
                 Intent intent1 = new Intent(Intent.ACTION_GET_CONTENT);
                 intent1.addCategory(Intent.CATEGORY_OPENABLE);
                 /*** REQUIRES MIME TYPE FOR PCAP FILES (IN ANDROIDMANIFEST) ***/
-                intent1.setType("plain/text");
+                intent1.setType("*/*");
 
                 try {
                     int OPEN_REQUEST_CODE = 41;

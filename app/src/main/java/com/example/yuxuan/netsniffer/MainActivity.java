@@ -70,234 +70,239 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getRes(View view){
-        Toast toast;
-        toast = Toast.makeText(getApplicationContext(), "Fetching NetSniffer resources",Toast.LENGTH_SHORT);
-        toast.show();
 
-        File resTCPDump = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-        if(!resTCPDump.exists()){
+        if(checkResources())
+            Toast.makeText(getApplicationContext(),"Netsniffer has the required resources",Toast.LENGTH_SHORT).show();
+        else {
+            Toast toast;
+            toast = Toast.makeText(getApplicationContext(), "Fetching NetSniffer resources", Toast.LENGTH_SHORT);
+            toast.show();
 
-            // copy tcpdump to memory
-            try {
-                InputStream fis = this.getAssets().open("tcpdump");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+            File resTCPDump = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
+            if (!resTCPDump.exists()) {
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                // copy tcpdump to memory
+                try {
+                    InputStream fis = this.getAssets().open("tcpdump");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/tcpdump");
-                p.waitFor();
-                p.destroy();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/tcpdump");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Log.d("TCPDump Resource: ","TCPDump binary saved on device");
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/tcpdump");
+                    p.waitFor();
+                    p.destroy();
 
-            } catch (IOException io){
-                Log.d("TCPDump res (IOEX): ",io.getMessage());
-            } catch (InterruptedException ie){
-                Log.d("TCPDump res (INTEX): ",ie.getMessage());
+                    Log.d("TCPDump Resource: ", "TCPDump binary saved on device");
 
+                } catch (IOException io) {
+                    Log.d("TCPDump res (IOEX): ", io.getMessage());
+                } catch (InterruptedException ie) {
+                    Log.d("TCPDump res (INTEX): ", ie.getMessage());
+
+                }
             }
-        }
 
-        File resNmap = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
-        if(!resNmap.exists()){
+            File resNmap = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
+            if (!resNmap.exists()) {
 
-            // copy nmap to memory
-            try {
-                InputStream fis = this.getAssets().open("nmap");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy nmap to memory
+                try {
+                    InputStream fis = this.getAssets().open("nmap");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap");
+                    p.waitFor();
+                    p.destroy();
 
 
-                Log.d("NMAP Resource: ","Nmap binary saved on device");
+                    Log.d("NMAP Resource: ", "Nmap binary saved on device");
 
-            } catch (IOException io){
-                Log.d("Nmap res (IOEX): ",io.getMessage());
-            } catch (InterruptedException ie){
-                Log.d("Nmap res (INTEX): ",ie.getMessage());
+                } catch (IOException io) {
+                    Log.d("Nmap res (IOEX): ", io.getMessage());
+                } catch (InterruptedException ie) {
+                    Log.d("Nmap res (INTEX): ", ie.getMessage());
+                }
             }
-        }
 
-        File resNmapSvc = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
-        if(!resNmapSvc.exists()) {
+            File resNmapSvc = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
+            if (!resNmapSvc.exists()) {
 
-            // copy nmap-services to memory
-            try {
-                InputStream fis = this.getAssets().open("nmap-services");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy nmap-services to memory
+                try {
+                    InputStream fis = this.getAssets().open("nmap-services");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-services");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-services");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-services");
+                    p.waitFor();
+                    p.destroy();
 
 
-                Log.d("NMAP Resource: ", "Nmap-services saved on device");
+                    Log.d("NMAP Resource: ", "Nmap-services saved on device");
 
-            } catch (IOException io) {
-                Log.d("Nmap res (IOEX): ", io.getMessage());
-            } catch (InterruptedException ie) {
-                Log.d("Nmap res (INTEX): ", ie.getMessage());
+                } catch (IOException io) {
+                    Log.d("Nmap res (IOEX): ", io.getMessage());
+                } catch (InterruptedException ie) {
+                    Log.d("Nmap res (INTEX): ", ie.getMessage());
+                }
             }
-        }
 
-        File resNmapOs = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
-        if(!resNmapOs.exists()) {
+            File resNmapOs = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+            if (!resNmapOs.exists()) {
 
-            // copy nmap-services to memory
-            try {
-                InputStream fis = this.getAssets().open("nmap-os-db");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy nmap-services to memory
+                try {
+                    InputStream fis = this.getAssets().open("nmap-os-db");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-os-db");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nmap-os-db");
+                    p.waitFor();
+                    p.destroy();
 
 
-                Log.d("NMAP Resource: ", "Nmap-OS-DB saved on device");
+                    Log.d("NMAP Resource: ", "Nmap-OS-DB saved on device");
 
-            } catch (IOException io) {
-                Log.d("Nmap res (IOEX): ", io.getMessage());
-            } catch (InterruptedException ie) {
-                Log.d("Nmap res (INTEX): ", ie.getMessage());
+                } catch (IOException io) {
+                    Log.d("Nmap res (IOEX): ", io.getMessage());
+                } catch (InterruptedException ie) {
+                    Log.d("Nmap res (INTEX): ", ie.getMessage());
+                }
             }
-        }
 
-        File resNexUtil = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
-        if(!resNexUtil.exists()){
+            File resNexUtil = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
+            if (!resNexUtil.exists()) {
 
-            // copy nexutil to memory
-            try{
-                InputStream fis = this.getAssets().open("nexutil");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy nexutil to memory
+                try {
+                    InputStream fis = this.getAssets().open("nexutil");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/nexutil");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nexutil");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/nexutil");
+                    p.waitFor();
+                    p.destroy();
 
-            } catch (IOException io){
+                } catch (IOException io) {
 
-            } catch (InterruptedException ie) {
+                } catch (InterruptedException ie) {
 
+                }
             }
-        }
 
-        File resLibFakeIoctl = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
-        if(!resLibFakeIoctl.exists()){
+            File resLibFakeIoctl = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+            if (!resLibFakeIoctl.exists()) {
 
-            // copy libfakeioctl.so to memory
-            try{
-                InputStream fis = this.getAssets().open("libfakeioctl.so");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy libfakeioctl.so to memory
+                try {
+                    InputStream fis = this.getAssets().open("libfakeioctl.so");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/libfakeioctl.so");
+                    p.waitFor();
+                    p.destroy();
 
-            } catch (IOException io){
+                } catch (IOException io) {
 
-            } catch (InterruptedException ie) {
+                } catch (InterruptedException ie) {
 
+                }
             }
-        }
 
-        File resPcbin = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
-        if(!resPcbin.exists()){
+            File resPcbin = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
+            if (!resPcbin.exists()) {
 
-            // copy pcbin to memory
-            try{
-                InputStream fis = this.getAssets().open("pcbin");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy pcbin to memory
+                try {
+                    InputStream fis = this.getAssets().open("pcbin");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcbin");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcbin");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcbin");
+                    p.waitFor();
+                    p.destroy();
 
-            } catch (IOException io){
+                } catch (IOException io) {
 
-            } catch (InterruptedException ie) {
+                } catch (InterruptedException ie) {
 
+                }
             }
-        }
 
-        File resPcmon = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
-        if(!resPcmon.exists()){
+            File resPcmon = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
+            if (!resPcmon.exists()) {
 
-            // copy pcmon to memory
-            try{
-                InputStream fis = this.getAssets().open("pcmon");
-                byte[] fbuffer = new byte[fis.available()];
-                fis.read(fbuffer);
-                fis.close();
+                // copy pcmon to memory
+                try {
+                    InputStream fis = this.getAssets().open("pcmon");
+                    byte[] fbuffer = new byte[fis.available()];
+                    fis.read(fbuffer);
+                    fis.close();
 
-                File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
-                OutputStream fos = new FileOutputStream(targetFile);
-                fos.write(fbuffer);
-                fos.close();
+                    File targetFile = new File("/data/data/com.example.yuxuan.netsniffer/pcmon");
+                    OutputStream fos = new FileOutputStream(targetFile);
+                    fos.write(fbuffer);
+                    fos.close();
 
-                Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcmon");
-                p.waitFor();
-                p.destroy();
+                    Process p = Runtime.getRuntime().exec("/system/bin/chmod 777 /data/data/com.example.yuxuan.netsniffer/pcmon");
+                    p.waitFor();
+                    p.destroy();
 
-            } catch (IOException io){
+                } catch (IOException io) {
 
-            } catch (InterruptedException ie) {
+                } catch (InterruptedException ie) {
 
+                }
             }
-        }
 
-        check = true;
-        Toast.makeText(getApplicationContext(),"Completed",Toast.LENGTH_SHORT).show();
-        TextView tv = findViewById(R.id.editText);
-        tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
+            check = true;
+            Toast.makeText(getApplicationContext(), "Completed", Toast.LENGTH_SHORT).show();
+            TextView tv = findViewById(R.id.editText);
+            tv.setText("NetSniffer has required resources, to proceed, choose an option on the top right menu");
+        }
     }
 
     @Override

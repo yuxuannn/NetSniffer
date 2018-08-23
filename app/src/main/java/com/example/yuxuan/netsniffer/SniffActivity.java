@@ -51,7 +51,7 @@ public class SniffActivity extends AppCompatActivity{
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    private TCPDump tcpdump;
+    private Sniffer sniffer;
     private ListView listView;
     private ItemAdapter itemAdapter;
     private String[] dataArray;
@@ -67,7 +67,7 @@ public class SniffActivity extends AppCompatActivity{
 
         verifyStoragePermissions(this);
         context = this;
-        tcpdump = new TCPDump(context);
+        sniffer = new Sniffer(context);
         listView = (ListView)findViewById(R.id.sniffList);
         filterAddress = null;
         updateDisplay("To start, choose an option from the menu on the top right", context);
@@ -86,18 +86,18 @@ public class SniffActivity extends AppCompatActivity{
         Toast toast;
         AlertDialog.Builder builder;
         switch (item.getItemId()) {
-            case R.id.start_live:
-                toast = Toast.makeText(getApplicationContext(),"Start Live", Toast.LENGTH_SHORT);
+            case R.id.start_mon:
+                toast = Toast.makeText(getApplicationContext(),"Start Mon", Toast.LENGTH_SHORT);
                 toast.show();
 
-                // start live service, output to screen
-                if(!tcpdump.isStarted() && !tcpdump.isStartedProm()) {
+                // start monitor service, output to screen
+                if(!sniffer.isStarted() && !sniffer.isStartedProm()) {
                     if (filterAddress != null){
-                        // start tcpdump with filtered address
-                        tcpdump.start(filterAddress);
+                        // start sniffer with filtered address
+                        sniffer.start(filterAddress);
                     } else {
-                        // start tcpdump with no filters
-                        tcpdump.start();
+                        // start sniffer with no filters
+                        sniffer.start();
                     }
                 } else
                     Toast.makeText(getApplicationContext(), "Already started", Toast.LENGTH_SHORT).show();
@@ -108,25 +108,25 @@ public class SniffActivity extends AppCompatActivity{
                 toast.show();
 
                 // start prom service, output to screen
-                if(!tcpdump.isStarted() && !tcpdump.isStartedProm()) {
+                if(!sniffer.isStarted() && !sniffer.isStartedProm()) {
                     if(filterAddress != null){
                         // start pcbin with filtered address
-                        tcpdump.startProm(filterAddress);
+                        sniffer.startProm(filterAddress);
                     } else {
                         // start pcbin with no filters
-                        tcpdump.startProm();
+                        sniffer.startProm();
                     }
                 } else
                     Toast.makeText(getApplicationContext(), "Already started", Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.add_filter_address:
-                toast = Toast.makeText(getApplicationContext(), "Filter Address", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(getApplicationContext(), "Filter", Toast.LENGTH_SHORT);
                 toast.show();
 
                 // add filter by address
                 builder = new AlertDialog.Builder(this);
-                builder.setTitle("Filter by Address");
+                builder.setTitle("Filter by Key");
 
                 // set up input
                 final EditText inputAddr = new EditText(this);
@@ -139,7 +139,7 @@ public class SniffActivity extends AppCompatActivity{
                     public void onClick(DialogInterface dialog, int which) {
                         // additional input check required
                         filterAddress = inputAddr.getText().toString();
-                        Toast.makeText(getApplicationContext(),"Filter by "+filterAddress, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(),"Filter by '"+filterAddress+"'", Toast.LENGTH_SHORT).show();
                     }
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -165,13 +165,13 @@ public class SniffActivity extends AppCompatActivity{
 
                 return true;
 
-            case R.id.stop_sniff:
+            case R.id.stop_cap:
                 toast = Toast.makeText(getApplicationContext(),"Stop Sniff", Toast.LENGTH_SHORT);
                 toast.show();
 
                 // stop live pcap
-                if(tcpdump.isStarted() || tcpdump.isStartedProm())
-                    tcpdump.stop();
+                if(sniffer.isStarted() || sniffer.isStartedProm())
+                    sniffer.stop();
 
                 return true;
 
@@ -218,23 +218,23 @@ public class SniffActivity extends AppCompatActivity{
         });
     }
 
-    public class TCPDump{
+    public class Sniffer{
 
         private boolean isStarted;
         private boolean isStartedProm;
 
-        /***tcpdump***/
-        //  process where tcpdump will be executed
+        /***Sniffer***/
+        //  process where pcbin will be executed
         private Process process;
 
-        // pid of tcpdump process
+        // pid of pcbin process
         private int pid;
 
-        // timer to create a process and exec tcpdump on it
-        private Timer tcpdumpTimer;
+        // timer to create a process and exec pcmon on it
+        private Timer pcmonTimer;
 
-        // timer task to create a process and exec tcpdump
-        private TimerTask tcpdump;
+        // timer task to create a process and exec pcmon
+        private TimerTask pcmonTimerTask;
 
         /*** display thread ***/
         // buffered reader to read file
@@ -279,7 +279,7 @@ public class SniffActivity extends AppCompatActivity{
 
         private String filterAddress;
 
-        public TCPDump(Context context){
+        public Sniffer(Context context){
             super();
 
             this.context = context;
@@ -327,8 +327,8 @@ public class SniffActivity extends AppCompatActivity{
                 }
             };
 
-            // init tcpdump timer task and launch tcpdump on it
-            tcpdump = new TimerTask() {
+            // init pcmon timer task and launch pcmon on it
+            pcmonTimerTask = new TimerTask() {
                 public void run() {
                     try {
                         // create a process with root privilege
@@ -352,7 +352,7 @@ public class SniffActivity extends AppCompatActivity{
                 @Override
                 public void run() {
                     try {
-                        // get pid of process that exec tcpdump with ps command
+                        // get pid of process that exec pcmon / pcbin with ps command
                         Process psProcess = Runtime.getRuntime().exec("su");
                         DataOutputStream dos = new DataOutputStream(psProcess.getOutputStream());
                         dos.writeBytes("ps | grep -e tcpdump -e pcbin  -e pcmon > /sdcard/Download/ps.txt\n");
@@ -463,9 +463,9 @@ public class SniffActivity extends AppCompatActivity{
             nexutilTimer = new Timer();
             nexutilTimer.schedule(nexutilTimerTask, 0);
 
-            // launch tcpdump process
-            tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,2000);
+            // launch pcmon process
+            pcmonTimer = new Timer();
+            pcmonTimer.schedule(pcmonTimerTask,2000);
 
             // sniff to pcap
             pcapTimer = new Timer();
@@ -517,9 +517,9 @@ public class SniffActivity extends AppCompatActivity{
             nexutilTimer = new Timer();
             nexutilTimer.schedule(nexutilTimerTask, 0);
 
-            // launch tcpdump process
-            tcpdumpTimer = new Timer();
-            tcpdumpTimer.schedule(tcpdump,2000);
+            // launch pcmon process
+            pcmonTimer = new Timer();
+            pcmonTimer.schedule(pcmonTimerTask,2000);
 
             // sniff to pcap
             pcapTimer = new Timer();
@@ -567,9 +567,9 @@ public class SniffActivity extends AppCompatActivity{
                 // stop ps thread
                 psTimer.cancel();
 
-                // stop the tcpdump process
+                // stop pcmon process
                 nexutilTimer.cancel();
-                tcpdumpTimer.cancel();
+                pcmonTimer.cancel();
                 process.destroy();
                 //buffer.setLength(0);
                 tempData = "";
@@ -603,10 +603,10 @@ public class SniffActivity extends AppCompatActivity{
                 showToast("PCAP saved as "+getFileName());
             }
 
-            // destroy the tcpdump process doesn't cause the process to be stopped on the system
+            // destroying the sniffing processes do not cause the process to be stopped on the system
             // to achieve that the process must be killed
             try{
-                // a new process is spawned to kill ALL tcpdump processes, terminates immediately after
+                // a new process is spawned to kill ALL sniffing processes, terminates immediately after
                 File psFile = new File("sdcard/Download/ps.txt");
                 BufferedReader br = new BufferedReader(new FileReader(psFile));
                 String line, check = "root      ";
