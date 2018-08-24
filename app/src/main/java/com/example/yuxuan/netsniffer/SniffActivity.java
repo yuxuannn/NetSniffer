@@ -3,13 +3,9 @@ package com.example.yuxuan.netsniffer;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Handler;
-import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,28 +14,14 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import org.w3c.dom.Text;
-
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -68,7 +50,7 @@ public class SniffActivity extends AppCompatActivity{
         verifyStoragePermissions(this);
         context = this;
         sniffer = new Sniffer(context);
-        listView = (ListView)findViewById(R.id.sniffList);
+        listView = findViewById(R.id.sniffList);
         filterAddress = null;
         updateDisplay("To start, choose an option from the menu on the top right", context);
     }
@@ -126,7 +108,7 @@ public class SniffActivity extends AppCompatActivity{
 
                 // add filter by address
                 builder = new AlertDialog.Builder(this);
-                builder.setTitle("Filter by Key");
+                builder.setTitle("Filter by Key (Case insensitive)");
 
                 // set up input
                 final EditText inputAddr = new EditText(this);
@@ -166,7 +148,7 @@ public class SniffActivity extends AppCompatActivity{
                 return true;
 
             case R.id.stop_cap:
-                toast = Toast.makeText(getApplicationContext(),"Stop Sniff", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(getApplicationContext(),"Stop Capture", Toast.LENGTH_SHORT);
                 toast.show();
 
                 // stop live pcap
@@ -197,7 +179,7 @@ public class SniffActivity extends AppCompatActivity{
             @Override
             public void run(){
 
-                listView = (ListView)findViewById(R.id.sniffList);
+                listView = findViewById(R.id.sniffList);
                 dataArray = content.split("\\n");
 
                 itemAdapter = new ItemAdapter(context,dataArray);
@@ -307,6 +289,7 @@ public class SniffActivity extends AppCompatActivity{
 
                         process1.destroy();
                     } catch (IOException io) {
+                        Log.d("Nexutil TimerTask: ",io.getMessage());
                     } //showToast(io.getMessage());
                 }
             };
@@ -323,6 +306,7 @@ public class SniffActivity extends AppCompatActivity{
                         os.close();
 
                     } catch (Exception e) {
+                        Log.d("Pcbin TimerTask: ",e.getMessage());
                     } //showToast(e.getMessage());
                 }
             };
@@ -344,6 +328,7 @@ public class SniffActivity extends AppCompatActivity{
 
 
                     } catch (Exception e) {
+                        Log.d("Pcmon TimerTask: ",e.getMessage());
                     } //showToast(e.getMessage());
                 }
             };
@@ -363,6 +348,7 @@ public class SniffActivity extends AppCompatActivity{
 
                         process.destroy();
                     } catch (IOException io) {
+                        Log.d("PS :",io.getMessage());
                     } //showToast(io.getMessage());
                 }
             };
@@ -384,7 +370,7 @@ public class SniffActivity extends AppCompatActivity{
                             if(isStarted) {
                                 if (!temp.contains("0x")) {
                                     if (filterAddress != null) {
-                                        if (temp.contains(filterAddress))
+                                        if (temp.toLowerCase().contains(filterAddress.toLowerCase()))
                                             tempData += counter+". " + temp + "\n";
                                     } else {
                                         tempData += counter + ". " + temp + "\n";
@@ -394,7 +380,7 @@ public class SniffActivity extends AppCompatActivity{
                             }
                             if(isStartedProm){
                                 if (filterAddress != null) {
-                                    if (temp.contains(filterAddress))
+                                    if (temp.toLowerCase().contains(filterAddress.toLowerCase()))
                                         tempData += counter+". " + temp + "\n";
                                 } else {
                                     tempData += counter + ". " + temp + "\n";
@@ -405,6 +391,7 @@ public class SniffActivity extends AppCompatActivity{
                         }
 
                     } catch (IOException io) {
+                        Log.d("Display: ",io.getMessage());
                     } //showToast(io.getMessage());
 
                     updateDisplay(tempData, context);
@@ -413,6 +400,7 @@ public class SniffActivity extends AppCompatActivity{
                         try {
                             reader.close();
                         } catch (IOException io) {
+                            Log.d("Display (Reader): ",io.getMessage());
                         } //showToast(io.getMessage());
 
                 }
@@ -432,6 +420,7 @@ public class SniffActivity extends AppCompatActivity{
                             os.close();
 
                         } catch (Exception e) {
+                            Log.d("PCAP TimerTask: ",e.getMessage());
                         } //showToast(e.getMessage());
                     }
                     if (isStartedProm) {
@@ -445,6 +434,7 @@ public class SniffActivity extends AppCompatActivity{
                             os.close();
 
                         } catch (Exception e) {
+                            Log.d("PCAP TimerTask: ",e.getMessage());
                         } //showToast(e.getMessage());
                     }
                 }
@@ -459,17 +449,17 @@ public class SniffActivity extends AppCompatActivity{
 
             init();
 
-            // set nic to monitor mode
+            // set NIC to monitor mode
             nexutilTimer = new Timer();
             nexutilTimer.schedule(nexutilTimerTask, 0);
 
             // launch pcmon process
             pcmonTimer = new Timer();
-            pcmonTimer.schedule(pcmonTimerTask,2000);
+            pcmonTimer.schedule(pcmonTimerTask,1000);
 
             // sniff to pcap
             pcapTimer = new Timer();
-            pcapTimer.schedule(pcapTimerTask,2500);
+            pcapTimer.schedule(pcapTimerTask,1500);
 
             // launch ps process
             psTimer = new Timer();
@@ -681,11 +671,11 @@ public class SniffActivity extends AppCompatActivity{
     }
 
     public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
+        // Check if write permission allowed
         int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
+            // Prompt user for permission
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,

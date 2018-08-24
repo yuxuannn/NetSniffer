@@ -3,22 +3,17 @@ package com.example.yuxuan.netsniffer;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -68,7 +63,6 @@ public class GraphActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        AlertDialog.Builder builder;
         switch (item.getItemId()){
             case R.id.graph_pcap_src:
                 Toast.makeText(getApplicationContext(),"Graph PCAP (SRC)",Toast.LENGTH_SHORT).show();
@@ -79,7 +73,7 @@ public class GraphActivity extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 /*** REQUIRES MIME TYPE FOR PCAP FILES ***/
-                intent.setType("images/*");
+                intent.setType("*/*");
 
                 try {
                     int OPEN_REQUEST_CODE = 41;
@@ -212,7 +206,7 @@ public class GraphActivity extends AppCompatActivity {
                     readPCAP.schedule(graphTimerTask,0);
 
                     try {
-                        Thread.sleep(4500);
+                        Thread.sleep(3500);
                     }catch (InterruptedException ie){
                     }
 
@@ -342,7 +336,7 @@ public class GraphActivity extends AppCompatActivity {
                         }// end if
 
 
-                        if(type == false) {
+                        if(!type) {
                             values = new float[srcVec.size()];
                             verticalLabels = new String[7];
                             horizontalLabels = new String[srcVec.size()];
