@@ -167,8 +167,7 @@ public class GraphActivity extends AppCompatActivity {
             return;
         }
 
-        if (resultCode == Activity.RESULT_OK)
-        {
+        if (resultCode == Activity.RESULT_OK) {
             if (requestCode == 41) {
                 if (resultData != null) {
                     currentUri = resultData.getData();
@@ -188,190 +187,190 @@ public class GraphActivity extends AppCompatActivity {
                         //    path = sdcard/android/data/com.google.android.apps.docs/+path;
 
                         //}
-                    }
-
-                    else if(path.contains("/file")){
+                    } else if (path.contains("/file")) {
                         str = path.split("file");
                         path = str[1];                      // /file/sdcard/Download/output.pcap
                     }
 
                     /*** ERROR HANDLING FOR BAD PATH / INVALID FILE ***/
-                    showToast(path);
+                    if (path.contains(".pcap")) {
+                        showToast(path);
 
-                    Vector<AddressPair> srcVec = new Vector<AddressPair>();
-                    Vector<AddressPair> dscVec = new Vector<AddressPair>();
+                        Vector<AddressPair> srcVec = new Vector<AddressPair>();
+                        Vector<AddressPair> dscVec = new Vector<AddressPair>();
 
-                    init(path);
-                    Timer readPCAP = new Timer();
-                    readPCAP.schedule(graphTimerTask,0);
+                        init(path);
+                        Timer readPCAP = new Timer();
+                        readPCAP.schedule(graphTimerTask, 0);
 
-                    try {
-                        Thread.sleep(3500);
-                    }catch (InterruptedException ie){
-                    }
-
-                    try{
-                        File dumpedFile = new File("/sdcard/Download/graph.txt");
-
-                        BufferedReader br = new BufferedReader(new FileReader(dumpedFile));
-
-                        String temp;
-                        int srcNo = 2;  // number when split
-                        int destNo = 4; // number when split
-
-
-                        int count = 0;
-                        while((temp = br.readLine()) != null){
-
-                            if(count == 0){
-                                // if promiscuous
-                                String split[] = temp.split(" ");
-                                if(!split[3].contains(">")){
-                                    ++srcNo;
-                                    ++destNo;
-                                }
-                                ++count;
-                            }
-
-                            if(!temp.contains("0x")){
-                                String[] line = temp.split(" ");
-
-                                int srcPos = srcNo;
-                                int destPos = destNo;
-
-                                if(line[2].contains("ARP")){
-                                    srcPos = srcNo + 1;
-                                    destPos = destNo + 1;
-
-                                    if(line[3].contains("Request")){
-                                        srcPos = srcNo + 2;
-                                        destPos = destNo + 2;
-                                    }
-                                }
-
-
-                                String src = line[srcPos];
-                                String dest = line[destPos];
-
-                                if(line[3].contains("Unknown")){
-                                    dest = line[destPos + 3];
-                                }
-
-                                boolean isFirstEntry = false;
-                                boolean srcFound = false;
-                                boolean destFound = false;
-                                int index = 0;
-
-                                if(srcVec.size() < 1){
-                                    isFirstEntry = true;
-                                }
-
-                                //if src vector empty
-                                if(isFirstEntry){
-                                    //add to vector
-                                    AddressPair pair = new AddressPair(src,1);
-                                    srcVec.add(pair);
-                                }else{
-                                    //check if in srcVector
-                                    for(int j=0; j<srcVec.size(); ++j){
-                                        if(srcVec.get(j).addrEquals(src)){
-                                            srcFound = true;
-                                            index = j;
-                                            break;
-                                        }
-                                    }
-                                }// end if
-
-                                if(srcFound){
-                                    //increment value by 1
-                                    srcVec.get(index).incrementByOne();
-                                }else{
-                                    if(!isFirstEntry){
-                                        //add to vector
-                                        AddressPair pair = new AddressPair(src,1);
-                                        srcVec.add(pair);
-                                    }
-                                }
-
-                                isFirstEntry = false;
-
-                                if(dscVec.size() < 1){
-                                    isFirstEntry = true;
-                                }
-
-                                //if dest vector empty
-                                if(isFirstEntry){
-                                    //add to vector
-                                    AddressPair pair = new AddressPair(dest,1);
-                                    dscVec.add(pair);
-                                }else{
-                                    //check if in destVector
-                                    for(int j=0; j<dscVec.size(); ++j){
-                                        if(dscVec.get(j).addrEquals(dest)){
-                                            destFound = true;
-                                            index = j;
-                                            break;
-                                        }
-                                    }
-                                }// end if
-
-                                if(destFound){
-                                    //increment value by 1
-                                    dscVec.get(index).incrementByOne();
-                                }else{
-                                    if(!isFirstEntry){
-                                        //add to vector
-                                        AddressPair pair = new AddressPair(dest,1);
-                                        dscVec.add(pair);
-                                    }
-                                }
-                            }}// end while, readline by line
-
-                        if(br != null){
-                            try{
-                                br.close();
-                            }catch(IOException io){
-                                //System.out.println(io.getMessage());
-                            }
-                        }// end if
-
-
-                        if(!type) {
-                            values = new float[srcVec.size()];
-                            verticalLabels = new String[7];
-                            horizontalLabels = new String[srcVec.size()];
-
-                            float max = -1;
-                            for (int i = 0; i < srcVec.size(); i++) {
-                                horizontalLabels[i] = srcVec.get(i).getAddr();
-                                values[i] = srcVec.get(i).getValue();
-                                if (values[i] > max)
-                                    max = values[i];
-                            }
-
-                            for (int i = 0; i < 6; i++)
-                                verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
-
-                            verticalLabels[6] = "0";
-
-                        } else {
-                            values = new float[dscVec.size()];
-                            verticalLabels = new String[7];
-                            horizontalLabels = new String[dscVec.size()];
-
-                            float max = -1;
-                            for (int i = 0; i < dscVec.size(); i++) {
-                                horizontalLabels[i] = dscVec.get(i).getAddr();
-                                values[i] = dscVec.get(i).getValue();
-                                if (values[i] > max)
-                                    max = values[i];
-                            }
-
-                            for (int i = 0; i < 6; i++)
-                                verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
-
-                            verticalLabels[6] = "0";
+                        try {
+                            Thread.sleep(3500);
+                        } catch (InterruptedException ie) {
                         }
+
+                        try {
+                            File dumpedFile = new File("/sdcard/Download/graph.txt");
+
+                            BufferedReader br = new BufferedReader(new FileReader(dumpedFile));
+
+                            String temp;
+                            int srcNo = 2;  // number when split
+                            int destNo = 4; // number when split
+
+
+                            int count = 0;
+                            while ((temp = br.readLine()) != null) {
+
+                                if (count == 0) {
+                                    // if promiscuous
+                                    String split[] = temp.split(" ");
+                                    if (!split[3].contains(">")) {
+                                        ++srcNo;
+                                        ++destNo;
+                                    }
+                                    ++count;
+                                }
+
+                                if (!temp.contains("0x")) {
+                                    String[] line = temp.split(" ");
+
+                                    int srcPos = srcNo;
+                                    int destPos = destNo;
+
+                                    if (line[2].contains("ARP")) {
+                                        srcPos = srcNo + 1;
+                                        destPos = destNo + 1;
+
+                                        if (line[3].contains("Request")) {
+                                            srcPos = srcNo + 2;
+                                            destPos = destNo + 2;
+                                        }
+                                    }
+
+
+                                    String src = line[srcPos];
+                                    String dest = line[destPos];
+
+                                    if (line[3].contains("Unknown")) {
+                                        dest = line[destPos + 3];
+                                    }
+
+                                    boolean isFirstEntry = false;
+                                    boolean srcFound = false;
+                                    boolean destFound = false;
+                                    int index = 0;
+
+                                    if (srcVec.size() < 1) {
+                                        isFirstEntry = true;
+                                    }
+
+                                    //if src vector empty
+                                    if (isFirstEntry) {
+                                        //add to vector
+                                        AddressPair pair = new AddressPair(src, 1);
+                                        srcVec.add(pair);
+                                    } else {
+                                        //check if in srcVector
+                                        for (int j = 0; j < srcVec.size(); ++j) {
+                                            if (srcVec.get(j).addrEquals(src)) {
+                                                srcFound = true;
+                                                index = j;
+                                                break;
+                                            }
+                                        }
+                                    }// end if
+
+                                    if (srcFound) {
+                                        //increment value by 1
+                                        srcVec.get(index).incrementByOne();
+                                    } else {
+                                        if (!isFirstEntry) {
+                                            //add to vector
+                                            AddressPair pair = new AddressPair(src, 1);
+                                            srcVec.add(pair);
+                                        }
+                                    }
+
+                                    isFirstEntry = false;
+
+                                    if (dscVec.size() < 1) {
+                                        isFirstEntry = true;
+                                    }
+
+                                    //if dest vector empty
+                                    if (isFirstEntry) {
+                                        //add to vector
+                                        AddressPair pair = new AddressPair(dest, 1);
+                                        dscVec.add(pair);
+                                    } else {
+                                        //check if in destVector
+                                        for (int j = 0; j < dscVec.size(); ++j) {
+                                            if (dscVec.get(j).addrEquals(dest)) {
+                                                destFound = true;
+                                                index = j;
+                                                break;
+                                            }
+                                        }
+                                    }// end if
+
+                                    if (destFound) {
+                                        //increment value by 1
+                                        dscVec.get(index).incrementByOne();
+                                    } else {
+                                        if (!isFirstEntry) {
+                                            //add to vector
+                                            AddressPair pair = new AddressPair(dest, 1);
+                                            dscVec.add(pair);
+                                        }
+                                    }
+                                }
+                            }// end while, readline by line
+
+                            if (br != null) {
+                                try {
+                                    br.close();
+                                } catch (IOException io) {
+                                    //System.out.println(io.getMessage());
+                                }
+                            }// end if
+
+
+                            if (!type) {
+                                values = new float[srcVec.size()];
+                                verticalLabels = new String[7];
+                                horizontalLabels = new String[srcVec.size()];
+
+                                float max = -1;
+                                for (int i = 0; i < srcVec.size(); i++) {
+                                    horizontalLabels[i] = srcVec.get(i).getAddr();
+                                    values[i] = srcVec.get(i).getValue();
+                                    if (values[i] > max)
+                                        max = values[i];
+                                }
+
+                                for (int i = 0; i < 6; i++)
+                                    verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
+
+                                verticalLabels[6] = "0";
+
+                            } else {
+                                values = new float[dscVec.size()];
+                                verticalLabels = new String[7];
+                                horizontalLabels = new String[dscVec.size()];
+
+                                float max = -1;
+                                for (int i = 0; i < dscVec.size(); i++) {
+                                    horizontalLabels[i] = dscVec.get(i).getAddr();
+                                    values[i] = dscVec.get(i).getValue();
+                                    if (values[i] > max)
+                                        max = values[i];
+                                }
+
+                                for (int i = 0; i < 6; i++)
+                                    verticalLabels[i] = Float.toString(max * ((6.0f - i) / 6.0f));
+
+                                verticalLabels[6] = "0";
+                            }
 /*
                         float[] testValues;
                         String[] testHorizLabels;
@@ -383,24 +382,29 @@ public class GraphActivity extends AppCompatActivity {
                         GraphView graphView = new GraphView(context ,testValues,"Analysis - "+filename+" @ "+DateFormat.getDateTimeInstance().format(new Date()),testHorizLabels,testVertLabels,false);
                         setContentView(graphView);
   */
-                        String mode;
-                        if(!type)
-                            mode = "SRC";
-                        else
-                            mode = "DST";
+                            String mode;
+                            if (!type)
+                                mode = "SRC";
+                            else
+                                mode = "DST";
 
-                        GraphView graphView = new GraphView(context, values, "Analysis ("+mode+") - "+path+" @ "+DateFormat.getDateTimeInstance().format(new Date()), horizontalLabels, verticalLabels, false);
-                        setContentView(graphView);
+                            GraphView graphView = new GraphView(context, values, "Analysis (" + mode + ") - " + path + " @ " + DateFormat.getDateTimeInstance().format(new Date()), horizontalLabels, verticalLabels, false);
+                            setContentView(graphView);
 
-                        Timer rmGraph = new Timer();
-                        rmGraph.schedule(rmTimerTask,0);
+                            Timer rmGraph = new Timer();
+                            rmGraph.schedule(rmTimerTask, 0);
 
-                    }catch(Exception e){
-                        //showToast(e.getMessage());
-                    }// end try-catch
+                        } catch (Exception e) {
+                            //showToast(e.getMessage());
+                        }// end try-catch
 
+                    } else {
+                        showToast("Invalid file type");
+                    }
                 }
-            }}}
+            }
+        }
+    }
 
     public static void verifyStoragePermissions(Activity activity) {
         // Check if write permissions allowed
