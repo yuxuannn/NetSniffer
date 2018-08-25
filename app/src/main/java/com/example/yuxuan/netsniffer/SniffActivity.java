@@ -108,7 +108,7 @@ public class SniffActivity extends AppCompatActivity{
 
                 // add filter by address
                 builder = new AlertDialog.Builder(this);
-                builder.setTitle("Filter by Key (Case insensitive)");
+                builder.setTitle("Filter by Key (Case Insensitive)");
 
                 // set up input
                 final EditText inputAddr = new EditText(this);

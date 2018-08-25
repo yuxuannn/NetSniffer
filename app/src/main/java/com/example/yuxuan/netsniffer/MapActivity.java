@@ -503,6 +503,7 @@ public class MapActivity extends AppCompatActivity {
                     Vector<String> missing = new Vector<String>(0);
                     Vector<String> unauthorized = new Vector<String>(0);
                     Vector<String> nmapInfo = new Vector<String>();
+                    int match = 0;
 
                     File listFile = new File(path);
                     boolean listFileExists = listFile.isFile();
@@ -586,6 +587,7 @@ public class MapActivity extends AppCompatActivity {
                                 if (found.get(i).equals(list.get(j))) {
                                     isUnauthorized = false;
                                     Log.d("UNAUTH_MATCH","false,"+found.get(i)+","+list.get(j));
+                                    ++match;
                                     break;
                                 }// end if
                             }// end for
@@ -608,8 +610,11 @@ public class MapActivity extends AppCompatActivity {
                     String dateOfScan = "";
                     String timeOfScan = "";
                     String scanTime = "";
+                    String noOfMatch = "";
                     String noOfMissing = "";
                     String noOfUnauthorized = "";
+
+                    noOfMatch = Integer.toString(match);
 
                     for (int i = 0; i < nmapInfo.size(); ++i) {
                         if(nmapInfo.get(i).contains("Done")){
@@ -672,6 +677,8 @@ public class MapActivity extends AppCompatActivity {
                         }
 
                         macStr = "" +
+                                "Total MACs found:      " + found.size() + " MAC(s) found.\n" +
+                                "No of Matches:         " + noOfMatch + " MAC(s) matched.\n\n" +
                                 "No of Missing:         " + missing.size() + " MAC(s) missing.\n\n" +
                                 "Missing MACs:          " + missingStr + "\n" +
                                 "No of Unauthorized:    " + unauthorized.size() + " MAC(s) unauthorized.\n\n" +
