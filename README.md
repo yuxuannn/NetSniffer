@@ -4,7 +4,7 @@ Development of a Network Sniffer for Nexus 5 (Android Marshmallow)
 
 Requirements
 - Rooted device (Nexus 5), test device rooted with CF-Auto-Root 
-- For devices unsupported by nexutil, remove "<item android:id="@+id/start_mon" android:title="@string/start_live"/>" from /NetSniffer/app/src/main/res/menu/sniff_menu before compilation
+- For devices unsupported by nexutil, remove "\<item android:id="@+id/start_mon" android:title="@string/start_live"/\>" from /NetSniffer/app/src/main/res/menu/sniff_menu before compilation
 
 # Credits
 Nexmon Project (Nexutil & libfakeioctl)
